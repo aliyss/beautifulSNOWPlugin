@@ -1,0 +1,41 @@
+{
+	"name": "beautifulSNOWPlugin",
+	"description" : "beautifulSnowClient as a Plugin instead of a full desktop Application.",
+	"manifest_version": 2,
+	"version": "0.1",
+	"author": "Aliyss Snow",
+	"permissions": [
+		"storage",
+		"unlimitedStorage"
+	],
+	"content_scripts": [
+		{
+			"matches": [
+				"https://*.service-now.com/*",
+				"http://*.service-now.com/*"
+			],
+			"js": [
+				"content.js"
+			],
+			"run_at": "document_end",
+			"all_frames": true
+		}
+	],
+	"background": {
+		"scripts": [
+			"background.js"
+		]
+	},
+	"browser_action": {
+		"default_icon": "./assets/logo.png",
+		"default_popup": "./extension_actions/index.html",
+		"default_title": "A tooltip popup description when you hover over the Chrome Extension icon."
+	},
+	"options_page": "./extension_options/index.html",
+	"web_accessible_resources": [
+		"context/g_form.js",
+		"context/g_link.js",
+		"context/handlers/commandHandler.js"
+	],
+	"content_security_policy": "script-src 'self' https://cdn.jsdelivr.net; object-src 'self'"
+}

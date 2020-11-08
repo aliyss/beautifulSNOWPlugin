@@ -1,0 +1,50 @@
+html, body {
+  height: 100%;
+  width: 80%;
+}
+
+html {
+  display: table;
+  margin: auto;
+}
+
+body {
+  padding-top: 50px;
+  display: table-cell;
+}
+
+div {
+  margin: auto;
+  width: 100%;
+}
+
+main {
+  margin: auto;
+}
+
+::-webkit-scrollbar {
+  height: 40px;
+  background-color: rgba(255,255,255,0);
+}
+
+::-webkit-scrollbar {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  background-color: #ebebeb;
+  -webkit-border-radius: 10px;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  -webkit-border-radius: 10px;
+  border-radius: 10px;
+  background: #6d6d6d;
+}

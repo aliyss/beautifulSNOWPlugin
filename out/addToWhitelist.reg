@@ -1,0 +1,28 @@
+Windows Registry Editor Version 5.00
+
+
+
+
+; If you are using Chrome uncomment the following lines:
+; [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome]
+
+; [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\ExtensionInstallWhitelist]
+; "420"="ibepdcdlipkeckfkfgobjnodpfpcginf"
+
+
+
+
+; If you are using Edge uncomment the following lines:
+; [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge]
+
+; [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge\ExtensionInstallAllowlist]
+; "420"="ibepdcdlipkeckfkfgobjnodpfpcginf"
+
+
+
+
+; If you are using Brave uncomment the following lines:
+; [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\BraveSoftware\Brave]
+
+; [HKEY_LOCAL_MACHINE\SOFTWARE\Policies\BraveSoftware\Brave\ExtensionInstallAllowlist]
+; "420"="ibepdcdlipkeckfkfgobjnodpfpcginf"
