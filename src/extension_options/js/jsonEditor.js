@@ -1,10 +1,17 @@
-
 var editor;
-chrome.storage.sync.get(['global_replacements'], function (result) {
+
+chrome.storage.sync.get(['global_replacements', 'quick_adds'], function (result) {
     let contentConfig = result;
 
+    if (!contentConfig.global_replacements) {
+        contentConfig.global_replacements = []
+    }
+    if (!contentConfig.quick_adds) {
+        contentConfig.quick_adds = []
+    }
+
     editor = new JSONEditor(document.getElementById('editor_holder'), {
-        schema:     {
+        schema: {
             type: "object",
             title: "⚙ Settings",
             options: {
@@ -53,6 +60,73 @@ chrome.storage.sync.get(['global_replacements'], function (result) {
                                     },
                                 }
                             }
+                        }
+                    }
+                },
+                quick_adds: {
+                    type: "array",
+                    format: "table",
+                    title: "Quick Adds",
+                    uniqueItems: true,
+                    items: {
+                        type: "object",
+                        name: "Row",
+                        properties: {
+                            code: {
+                                name: "Code",
+                                type: "string",
+                                options: {
+                                    input_height: '40px',
+                                    input_width: '100px'
+                                }
+                            },
+                            setValue: {
+                                name: "Set Value",
+                                type: "string",
+                                options: {
+                                    input_height: '40px',
+                                    input_width: '200px'
+                                }
+                            },
+                            fieldNames: {
+                                type: "array",
+                                format: "table",
+                                title: "Field Names",
+                                uniqueItems: true,
+                                items: {
+                                    type: "string",
+                                    name: "",
+                                }
+                            },
+                            keys: {
+                                type: "array",
+                                format: "table",
+                                title: "Keys",
+                                uniqueItems: true,
+                                items: {
+                                    type: "object",
+                                    name: "Row",
+                                    properties: {
+                                        key: {
+                                            name: "Key",
+                                            type: "string",
+                                            options: {
+                                                input_height: '40px',
+                                                input_width: '100px'
+                                            }
+                                        },
+                                        value: {
+                                            name: "Value",
+                                            type: "string",
+                                            format: "xhtml",
+                                            options: {
+                                                input_height: '40px',
+                                                input_width: '100vh'
+                                            }
+                                        },
+                                    }
+                                }
+                            },
                         }
                     }
                 },
@@ -283,19 +357,39 @@ chrome.storage.sync.get(['global_replacements'], function (result) {
 
     document.getElementById('submit').addEventListener('click', function () {
 
-        document.getElementById('submit').className = 'btn btn-success';
-        document.getElementById('submit').innerText = 'Saving...';
+        try {
+            chrome.storage.sync.set(editor.getValue())
+            document.getElementById('submit').className = 'btn btn-success';
+            document.getElementById('submit').innerText = 'Saving...';
+        } catch (e) {
+            console.error(e)
+            document.getElementById('submit').className = 'btn btn-error';
+            document.getElementById('submit').innerText = 'Error: Saving.';
+        }
 
-        chrome.storage.sync.set(editor.getValue())
 
         setTimeout(() => {
             document.getElementById('submit').innerText = 'Save Settings';
             document.getElementById('submit').className = 'btn btn-secondary';
         }, 1000);
     });
+
+    document.getElementById('export').addEventListener('click', async function () {
+        try {
+            let vLink = document.createElement('a'),
+                vBlob = new Blob([JSON.stringify(editor.getValue(), null, 4)], {type: "octet/stream"}),
+                vName = 'beautifulSNOW_Configuration.json',
+                vUrl = window.URL.createObjectURL(vBlob);
+            vLink.setAttribute('href', vUrl);
+            vLink.setAttribute('download', vName);
+            vLink.click();
+        } catch (e) {
+            console.error(e)
+        }
+    });
 });
 
-document.getElementById('import').addEventListener('click',  async function () {
+document.getElementById('import').addEventListener('click', async function () {
 
     document.getElementById('import').className = 'btn btn-warning';
     document.getElementById('import').innerText = 'Importing...';
@@ -305,14 +399,16 @@ document.getElementById('import').addEventListener('click',  async function () {
     const contents = await file.text();
 
     try {
-        chrome.storage.sync.set(JSON.parse(contents), function() {
+        chrome.storage.sync.set(JSON.parse(contents), function () {
             console.log("Files have been saved to SYNC")
         });
+        location.reload();
     } catch (e) {
         console.error(e)
-        chrome.storage.local.set(JSON.parse(contents), function() {
+        chrome.storage.local.set(JSON.parse(contents), function () {
             console.log("Files have been saved to LOCAL")
         });
+        location.reload();
     }
 
     setTimeout(() => {
@@ -320,17 +416,4 @@ document.getElementById('import').addEventListener('click',  async function () {
         document.getElementById('import').className = 'btn btn-secondary';
     }, 1000);
 
-});
-
-document.getElementById('export').addEventListener('click',  async function () {
-    try {
-        chrome.storage.sync.get(['config'], function() {
-            console.log("Files have been loaded from SYNC")
-        });
-    } catch (e) {
-        console.error(e)
-        chrome.storage.local.get(['config'], function() {
-            console.log("Files have been loaded from LOCAL")
-        });
-    }
 });

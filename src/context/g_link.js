@@ -1,12 +1,16 @@
 function handleTextNode(textNode, currentDocument) {
-    if (textNode.parentNode.nodeName === 'SCRIPT'
+    if (textNode.parentNode.nodeName === "TEXTAREA" ||
+        textNode.parentNode.nodeName === 'SCRIPT'
         || textNode.parentNode.nodeName === 'STYLE'
     ) {
         return;
     }
     let origText = textNode.textContent;
-    for (let i = 0; i < bSNOW_global_replacements.length; i++) {
-        let mainReplacement = bSNOW_global_replacements[i];
+    if (!bSNOW_global_settings && bSNOW_global_settings.global_replacements) {
+        return;
+    }
+    for (let i = 0; i < bSNOW_global_settings.global_replacements.length; i++) {
+        let mainReplacement = bSNOW_global_settings.global_replacements[i];
         let newHtml = origText.replace(new RegExp(mainReplacement.searchRegex, "g"), function (m) {
             return `<${mainReplacement.replaceValue.tag} 
                     ${mainReplacement.replaceValue.attribute.replace('<default>', m)}

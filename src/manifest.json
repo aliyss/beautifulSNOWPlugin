@@ -2,7 +2,7 @@
 	"name": "beautifulSNOWPlugin",
 	"description" : "beautifulSnowClient as a Plugin instead of a full desktop Application.",
 	"manifest_version": 2,
-	"version": "0.1",
+	"version": "1.024",
 	"author": "Aliyss Snow",
 	"permissions": [
 		"storage",

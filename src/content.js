@@ -40,8 +40,8 @@ function waitForElement(selector) {
             let scriptHeader = document.createElement('script');
             scriptHeader.id = "global_beautiful_snow"
 
-            chrome.storage.sync.get(['global_replacements'], function (result) {
-                scriptHeader.textContent += 'var bSNOW_global_replacements = ' + JSON.stringify(result['global_replacements']) + ';\n';
+            chrome.storage.sync.get(['global_replacements', 'quick_adds'], function (result) {
+                scriptHeader.textContent += 'var bSNOW_global_settings = ' + JSON.stringify(result) + ';\n';
             });
 
             document.head.appendChild(scriptHeader);
