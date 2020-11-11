@@ -182,6 +182,7 @@ async function matchYo (match, config, element_id) {
             match = replaceTask
         } else {
             match = ""
+
         }
     }
     return match;
