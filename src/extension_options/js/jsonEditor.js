@@ -1,6 +1,6 @@
 var editor;
 
-chrome.storage.sync.get(['global_replacements', 'quick_adds'], function (result) {
+chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_add_buttons'], function (result) {
     let contentConfig = result;
 
     if (!contentConfig.global_replacements) {
@@ -8,6 +8,12 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds'], function (result)
     }
     if (!contentConfig.quick_adds) {
         contentConfig.quick_adds = []
+    }
+    if (!contentConfig.quick_add_buttons) {
+        contentConfig.quick_add_buttons = []
+    }
+    if (!contentConfig.actions) {
+        contentConfig.actions = []
     }
 
     editor = new JSONEditor(document.getElementById('editor_holder'), {
@@ -45,6 +51,10 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds'], function (result)
                             replaceValue: {
                                 type: "object",
                                 name: "Replace Value",
+                                options: {
+                                    collapsed: true,
+                                    input_width: '100vh'
+                                },
                                 properties: {
                                     tag: {
                                         type: "string",
@@ -63,6 +73,76 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds'], function (result)
                         }
                     }
                 },
+                actions: {
+                    type: "array",
+                    format: "table",
+                    title: "Actions",
+                    uniqueItems: true,
+                    items: {
+                        type: "object",
+                        name: "Row",
+                        properties: {
+                            action_name: {
+                                title: "Action",
+                                type: "string",
+                                options: {
+                                    input_height: '40px',
+                                    input_width: '200px'
+                                }
+                            },
+                            action_id: {
+                                title: "Action Id",
+                                type: "string",
+                                options: {
+                                    input_width: "0vh",
+                                    hidden: true
+                                }
+                            },
+                            keys: {
+                                type: "array",
+                                format: "table",
+                                title: "Runners",
+                                uniqueItems: true,
+                                options: {
+                                    input_width: '120vh'
+                                },
+                                items: {
+                                    type: "object",
+                                    name: "Row",
+                                    properties: {
+                                        key: {
+                                            title: "Field ID",
+                                            type: "string",
+                                            options: {
+                                                input_height: '40px',
+                                                input_width: '400px'
+                                            }
+                                        },
+                                        type: {
+                                            title: "Field Type",
+                                            type: "string",
+                                            options: {
+                                                input_height: '40px',
+                                                input_width: '200px'
+                                            },
+                                            enumSource: [["val", "ref"]],
+                                            default: "val"
+                                        },
+                                        value: {
+                                            title: "Field Value",
+                                            type: "string",
+                                            format: "xhtml",
+                                            options: {
+                                                input_height: '40px',
+                                                input_width: '100vh'
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
                 quick_adds: {
                     type: "array",
                     format: "table",
@@ -73,19 +153,11 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds'], function (result)
                         name: "Row",
                         properties: {
                             code: {
-                                name: "Code",
+                                title: "Code",
                                 type: "string",
                                 options: {
                                     input_height: '40px',
                                     input_width: '100px'
-                                }
-                            },
-                            setValue: {
-                                name: "Set Value",
-                                type: "string",
-                                options: {
-                                    input_height: '40px',
-                                    input_width: '200px'
                                 }
                             },
                             fieldNames: {
@@ -94,15 +166,98 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds'], function (result)
                                 title: "Field Names",
                                 uniqueItems: true,
                                 items: {
+                                    title: "Field ID",
                                     type: "string",
                                     name: "",
+                                },
+                                options: {
+                                    input_height: '40px',
+                                    input_width: '400px'
                                 }
                             },
                             keys: {
                                 type: "array",
                                 format: "table",
-                                title: "Keys",
+                                title: "Action List",
                                 uniqueItems: true,
+                                items: {
+                                    type: "object",
+                                    name: "Row",
+                                    properties: {
+                                        key: {
+                                            title: "Key",
+                                            type: "string",
+                                            options: {
+                                                input_height: '40px',
+                                                input_width: '100px'
+                                            }
+                                        },
+                                        value: {
+                                            title: "Action",
+                                            name: "Action Name",
+                                            type: "string",
+                                            options: {
+                                                input_height: '40px',
+                                                input_width: '100vh'
+                                            },
+                                            watch: {
+                                                action_yo: "actions"
+                                            },
+                                            enumSource: [
+                                                ["none"],
+                                                {
+                                                    source: "action_yo",
+                                                    title: "{{item.action_name}}",
+                                                    value: "{{item.action_id}}"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            },
+                        }
+                    }
+                },
+                quick_add_buttons: {
+                    type: "array",
+                    format: "table",
+                    title: "Quick Add Buttons",
+                    uniqueItems: true,
+                    items: {
+                        type: "object",
+                        name: "Row",
+                        properties: {
+                            code: {
+                                title: "Code",
+                                type: "string",
+                                options: {
+                                    input_height: '40px',
+                                    input_width: '100px'
+                                }
+                            },
+                            tableNames: {
+                                type: "array",
+                                format: "table",
+                                title: "Table Names",
+                                uniqueItems: true,
+                                items: {
+                                    title: "Table ID",
+                                    type: "string",
+                                    name: "",
+                                },
+                                options: {
+                                    input_height: '40px',
+                                    input_width: '500px'
+                                }
+                            },
+                            keys: {
+                                type: "array",
+                                format: "table",
+                                title: "Action List",
+                                uniqueItems: true,
+                                options: {
+                                    input_width: '100vh'
+                                },
                                 items: {
                                     type: "object",
                                     name: "Row",
@@ -111,239 +266,38 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds'], function (result)
                                             name: "Key",
                                             type: "string",
                                             options: {
+                                                hidden: true,
                                                 input_height: '40px',
                                                 input_width: '100px'
-                                            }
+                                            },
+                                            default: "*"
                                         },
                                         value: {
-                                            name: "Value",
+                                            title: "Action",
+                                            name: "Action Name",
                                             type: "string",
-                                            format: "xhtml",
                                             options: {
                                                 input_height: '40px',
                                                 input_width: '100vh'
-                                            }
-                                        },
+                                            },
+                                            watch: {
+                                                action_yo: "actions"
+                                            },
+                                            enumSource: [
+                                                ["none"],
+                                                {
+                                                    source: "action_yo",
+                                                    title: "{{item.action_name}}",
+                                                    value: "{{item.action_id}}"
+                                                }
+                                            ]
+                                        }
                                     }
                                 }
                             },
                         }
                     }
                 },
-                /*notes: {
-                    type: "array",
-                    format: "table",
-                    title: "Notes",
-                    uniqueItems: true,
-                    items: {
-                        type: "object",
-                        name: "Row",
-                        properties: {
-                            key: {
-                                type: "string",
-                                options: {
-                                    input_height: '40px',
-                                    input_width: '100px'
-                                }
-                            },
-                            name: {
-                                type: "string",
-                                options: {
-                                    input_height: '40px',
-                                    input_width: '400px'
-                                }
-                            },
-                            value: {
-                                type: "string",
-                                format: "xhtml",
-                                options: {
-                                    input_height: '40px',
-                                    input_width: '100vh'
-                                }
-                            }
-                        }
-                    }
-                },
-                comments: {
-                    type: "array",
-                    format: "table",
-                    title: "Comments",
-                    uniqueItems: true,
-                    items: {
-                        type: "object",
-                        name: "Row",
-                        properties: {
-                            key: {
-                                type: "string",
-                                options: {
-                                    input_height: '40px',
-                                    input_width: '100px'
-                                }
-                            },
-                            name: {
-                                type: "string",
-                                options: {
-                                    input_height: '40px',
-                                    input_width: '400px'
-                                }
-                            },
-                            value: {
-                                type: "string",
-                                format: "xhtml",
-                                options: {
-                                    input_height: '40px',
-                                    input_width: '100vh'
-                                }
-                            }
-                        }
-                    }
-                },
-                reportingMain: {
-                    type: "array",
-                    format: "table",
-                    title: "Reporting",
-                    uniqueItems: true,
-                    items: {
-                        type: "object",
-                        name: "Row",
-                        properties: {
-                            key: {
-                                type: "string",
-                                options: {
-                                    input_height: '40px',
-                                    input_width: '100px'
-                                }
-                            },
-                            name: {
-                                type: "string",
-                                options: {
-                                    input_height: '40px',
-                                    input_width: '400px'
-                                }
-                            },
-                            value: {
-                                type: "string",
-                                format: "xhtml",
-                                options: {
-                                    input_height: '40px',
-                                    input_width: '100vh'
-                                }
-                            }
-                        }
-                    }
-                },
-                ifHandler: {
-                    type: "array",
-                    format: "table",
-                    title: "If Handler",
-                    uniqueItems: true,
-                    items: {
-                        type: "object",
-                        name: "Row",
-                        properties: {
-                            key: {
-                                type: "string",
-                                options: {
-                                    input_height: '40px',
-                                    input_width: '100px'
-                                }
-                            },
-                            iftype: {
-                                title: "If Type",
-                                type: "string",
-                                options: {
-                                    input_height: '40px',
-                                    input_width: '400px'
-                                }
-                            },
-                            ifvalue: {
-                                title: "If Value",
-                                type: "string",
-                                options: {
-                                    input_height: '40px',
-                                    input_width: '100vh'
-                                }
-                            },
-                            elsetype: {
-                                title: "Then Type",
-                                type: "string",
-                                options: {
-                                    input_height: '40px',
-                                    input_width: '400px'
-                                }
-                            },
-                            elsevalue: {
-                                title: "Then Value",
-                                type: "string",
-                                options: {
-                                    input_height: '40px',
-                                    input_width: '100vh'
-                                }
-                            }
-                        }
-                    }
-                },
-                timers: {
-                    type: "array",
-                    format: "table",
-                    title: "Timers",
-                    uniqueItems: true,
-                    items: {
-                        type: "object",
-                        name: "Row",
-                        properties: {
-                            key: {
-                                type: "string",
-                                options: {
-                                    input_height: '40px',
-                                    input_width: '100px'
-                                }
-                            },
-                            name: {
-                                type: "string",
-                                options: {
-                                    input_height: '40px',
-                                    input_width: '400px'
-                                }
-                            },
-                            value: {
-                                type: "string",
-                                format: "xhtml",
-                                options: {
-                                    input_height: '40px',
-                                    input_width: '100vh'
-                                }
-                            },
-                            task: {
-                                type: "string",
-                                options: {
-                                    input_height: '40px',
-                                    input_width: '300px'
-                                }
-                            }
-                        }
-                    }
-                },
-                additional: {
-                    type: "object",
-                    title: "Additional Options",
-                    properties: {
-                        autoRapport: {
-                            type: "boolean",
-                            title: "Reporting-Help",
-                            format: "checkbox"
-                        },
-                        smartSkype: {
-                            type: "boolean",
-                            title: "Smart-Skype",
-                            format: "checkbox"
-                        },
-                        executablePath: {
-                            type: "string",
-                            title: "Executable Path"
-                        }
-                    }
-                }*/
             }
         },
         theme: 'bootstrap4',
@@ -351,9 +305,25 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds'], function (result)
         prompt_before_delete: false,
         disable_edit_json: true,
         disable_properties: true,
+        disable_array_reorder: true,
+        disable_array_delete_last_row: true,
+        disable_array_delete_all_rows: true,
         object_layout: 'table',
         startval: {...contentConfig}
     });
+
+    const watcherCallbackAndArrayId = function (path) {
+        let pathValue = this.getEditor(path).getValue();
+        for (let i = 0; i < pathValue.length; i++) {
+            if (!pathValue[i].action_id) {
+                pathValue[i].action_id = Math.random().toString().split(".").join("") + Math.random().toString().split(".").join("")
+                this.getEditor(path + "." + i).setValue(pathValue)
+            }
+        }
+    }
+
+    editor.watch('root.actions', watcherCallbackAndArrayId.bind(editor, 'root.actions'));
+
 
     document.getElementById('submit').addEventListener('click', function () {
 

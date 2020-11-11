@@ -37,8 +37,10 @@ async function ObjectByString(o, s) {
     return o;
 }
 
-async function handleCommand(whereTask, valueTask) {
+async function handleCommand(whereTask, valueTask, element_id=null) {
     let specifications = bSNOW_global_settings.quick_adds;
+    let specification_buttons = bSNOW_global_settings.quick_add_buttons;
+    let special_actions = bSNOW_global_settings.actions;
 
     let parameters = valueTask.match(new RegExp(/\(.*\)/g, "g"))
     let replacementParameter = ""
@@ -48,143 +50,159 @@ async function handleCommand(whereTask, valueTask) {
     }
 
     let turbulenceElement;
-    for (let i = 0; i < specifications.length; i++) {
-        if (specifications[i].fieldNames.includes(whereTask) || whereTask === specifications[i].code) {
-            turbulenceElement = specifications[i]
-            break;
+    if (element_id === null) {
+        if (!specification_buttons) {
+            return;
+        }
+        for (let i = 0; i < specification_buttons.length; i++) {
+            if (whereTask === specification_buttons[i].code) {
+                turbulenceElement = specification_buttons[i]
+                break;
+            }
+        }
+    } else {
+        for (let i = 0; i < specifications.length; i++) {
+            if (specifications[i].fieldNames.includes(whereTask) || whereTask === specifications[i].code) {
+                turbulenceElement = specifications[i]
+                break;
+            }
+        }
+
+        if (!turbulenceElement || !turbulenceElement.keys) {
+            return;
         }
     }
 
-    let turbulenceValue;
+    if (!turbulenceElement || !turbulenceElement.keys) {
+        return;
+    }
+
+    let turbulenceValueMain;
+
+
+
     for (let i = 0; i < turbulenceElement.keys.length; i++) {
         if (valueTask === turbulenceElement.keys[i].key) {
-            turbulenceValue = turbulenceElement.keys[i].value.replace(
-                new RegExp('<default>', "g"),
-                replacementParameter
-            )
-            let turboMatches = turbulenceValue.match(/\$.*?\$/g)
-            if (turboMatches) {
-                let g_formDataCache = window.NOW ? {
-                    NOW: {
-                        user: window.NOW.user
-                    }
-                } : {}
+            let runner_actions;
+            for (let j = 0; j < special_actions.length; j++) {
+                if (special_actions[j].action_id === turbulenceElement.keys[i].value) {
+                    runner_actions = special_actions[j].keys;
+                    break;
+                }
+            }
+            if (!runner_actions) {
+                continue;
+            }
+            for (let ki = 0; ki < runner_actions.length; ki++) {
+                let turbulenceValue;
+                turbulenceValue = runner_actions[ki].value.replace(
+                    new RegExp('<default>', "g"),
+                    replacementParameter
+                )
+                let turboMatches = turbulenceValue.match(/\$.*?\$/g)
 
-                for (let j = 0; j < turboMatches.length; j++) {
-                    let savedTurboMatch = turboMatches[j];
-                    turboMatches[j] = turboMatches[j].substring(1, turboMatches[j].length - 1);
-                    let mainValue = turboMatches[j]
-                    if (turboMatches[j].includes(".")) {
-                        mainValue = turboMatches[j].split(".")[0]
-                    }
-                    if (!g_formDataCache[mainValue]) {
-                        try {
-                            let x_main = await g_xmlGetter(`${location.origin}/api/now/v1/table/${window.g_form.tableName}/${window.g_form.getUniqueValue()}`)
-                            if (x_main.status === 404) {
-                                throw new Error("Not Found")
-                            }
-                            let x_main_json = await x_main.json()
-                            if (x_main_json && x_main_json.result) {
-                                g_formDataCache = { ...x_main_json.result, ...g_formDataCache }
-                            }
-                        } catch (e) {
-                            let g_formElement = window.g_form.elements.find(element => element.fieldName === mainValue)
-                            if (!g_formElement) {
-                                continue;
-                            }
-                            switch (g_formElement.type) {
-                                case "reference":
-                                    if (window.g_form.tableName === "task_time_worked" && g_formElement.fieldName === "task") {
-                                        let x_main_sub = await g_xmlGetter(`${location.origin}/api/now/v1/table/task/${window.g_form.getValue(g_formElement.fieldName)}`)
-                                        let x_main_json_sub = await x_main_sub.json()
-                                        if (x_main_json_sub && x_main_json_sub.result) {
-                                            g_formDataCache[g_formElement.fieldName] = { ...x_main_json_sub.result }
+                if (turboMatches) {
+                    let g_formDataCache = window.NOW ? {
+                        NOW: {
+                            user: window.NOW.user
+                        }
+                    } : {}
+
+                    for (let j = 0; j < turboMatches.length; j++) {
+                        let savedTurboMatch = turboMatches[j];
+                        turboMatches[j] = turboMatches[j].substring(1, turboMatches[j].length - 1);
+                        let mainValue = turboMatches[j]
+                        if (turboMatches[j].includes(".")) {
+                            mainValue = turboMatches[j].split(".")[0]
+                        }
+                        if (!g_formDataCache[mainValue]) {
+                            try {
+                                let x_main = await g_xmlGetter(`${location.origin}/api/now/v1/table/${window.g_form.tableName}/${window.g_form.getUniqueValue()}`)
+                                if (x_main.status === 404) {
+                                    throw new Error("Not Found")
+                                }
+                                let x_main_json = await x_main.json()
+                                if (x_main_json && x_main_json.result) {
+                                    g_formDataCache = { ...x_main_json.result, ...g_formDataCache }
+                                }
+                            } catch (e) {
+                                let g_formElement = window.g_form.elements.find(element => element.fieldName === mainValue)
+                                if (!g_formElement) {
+                                    continue;
+                                }
+                                switch (g_formElement.type) {
+                                    case "reference":
+                                        if (window.g_form.tableName === "task_time_worked" && g_formElement.fieldName === "task") {
+                                            let x_main_sub = await g_xmlGetter(`${location.origin}/api/now/v1/table/task/${window.g_form.getValue(g_formElement.fieldName)}`)
+                                            let x_main_json_sub = await x_main_sub.json()
+                                            if (x_main_json_sub && x_main_json_sub.result) {
+                                                g_formDataCache[g_formElement.fieldName] = { ...x_main_json_sub.result }
+                                            } else {
+                                                g_formDataCache[g_formElement.fieldName] = window.g_form.getValue(g_formElement.fieldName)
+                                            }
                                         } else {
                                             g_formDataCache[g_formElement.fieldName] = window.g_form.getValue(g_formElement.fieldName)
                                         }
-                                    } else {
+                                        break;
+                                    default:
                                         g_formDataCache[g_formElement.fieldName] = window.g_form.getValue(g_formElement.fieldName)
-                                    }
-                                    break;
-                                default:
-                                    g_formDataCache[g_formElement.fieldName] = window.g_form.getValue(g_formElement.fieldName)
-                                    break;
+                                        break;
+                                }
                             }
                         }
-                    }
 
-                    let fsLogix = await ObjectByString(g_formDataCache, turboMatches[j])
-                    if (fsLogix) {
-                        turbulenceValue = turbulenceValue.replace(savedTurboMatch, fsLogix)
+                        let fsLogix = await ObjectByString(g_formDataCache, turboMatches[j])
+                        if (fsLogix) {
+                            turbulenceValue = turbulenceValue.replace(savedTurboMatch, fsLogix)
+                        }
                     }
+                }
+
+                turbulenceElement.id = runner_actions[ki].key
+                if (element_id && element_id.endsWith(runner_actions[ki].key)) {
+                    turbulenceValueMain = turbulenceValue;
+                    turbulenceElement.id = element_id;
+                } else {
+                    window.g_form.setValue(runner_actions[ki].key, "")
+                    window.g_form.setValue(runner_actions[ki].key, turbulenceValue)
                 }
             }
             break;
         }
     }
+
     return {
-        returnFieldName: turbulenceElement.setValue || turbulenceElement.fieldNames[0],
-        returnValue: turbulenceValue
+        returnFieldName: turbulenceElement.id,
+        returnValue: turbulenceValueMain
     };
 }
 
 async function matchYo (match, config, element_id) {
     match = match.substring(config.beforeLimiter.length, match.length - config.afterLimiter.length)
-    if (match.match(/:(?![^(]*[)])/)) {
-        let currentTasks = match.split(/:(?![^(]*[)])/);
-        for (let i = 0; i < currentTasks.length; i++) {
-            let replaceTask;
-            if (currentTasks[i].match(/=(?![^(]*[)])/)) {
-                let contentSpecifics = currentTasks[i].split(/=(?![^(]*[)])/);
-                let whereTask = contentSpecifics[0]
-                let valueTask = contentSpecifics[1]
 
-                let commanded = await handleCommand(whereTask, valueTask);
-                if (element_id.endsWith(commanded.returnFieldName) && commanded.returnValue) {
-                    replaceTask = commanded.returnValue
-                } else if (commanded.returnFieldName && commanded.returnValue) {
-                    await window.g_form.setValue(commanded.returnFieldName, commanded.returnValue)
-                }
-            } else {
-                let commanded = await handleCommand(element_id, currentTasks[i]);
-                if (element_id.endsWith(commanded.returnFieldName) && commanded.returnValue) {
-                    replaceTask = commanded.returnValue
-                }
-            }
-            if (replaceTask) {
-                match = match.replace(currentTasks[i], replaceTask)
-            } else {
-                match = match.replace(":" + currentTasks[i], "")
-                match = match.replace(currentTasks[i] + ":", "")
-                match = match.replace(currentTasks[i], "")
-            }
-        }
-    } else {
-        let replaceTask;
-        if (match.match(/=(?![^(]*[)])/)) {
-            let contentSpecifics = match.split(/=(?![^(]*[)])/);
-            let whereTask = contentSpecifics[0]
-            let valueTask = contentSpecifics[1]
+    let replaceTask;
 
-            let commanded = await handleCommand(whereTask, valueTask);
-            if (element_id.endsWith(commanded.returnFieldName) && commanded.returnValue) {
-                replaceTask = commanded.returnValue
-            } else if (commanded.returnFieldName && commanded.returnValue) {
-                await window.g_form.setValue(commanded.returnFieldName, commanded.returnValue)
-            }
-        } else {
-            let commanded = await handleCommand(element_id, match);
-            if (element_id.endsWith(commanded.returnFieldName) && commanded.returnValue) {
-                replaceTask = commanded.returnValue
-            }
-        }
-        if (replaceTask) {
-            match = replaceTask
-        } else {
-            match = ""
+    let whereTask = element_id
+    let valueTask = match
 
-        }
+    if (match.match(/=(?![^(]*[)])/)) {
+        let contentSpecifics = match.split(/=(?![^(]*[)])/);
+        whereTask = contentSpecifics[0]
+        valueTask = contentSpecifics[1]
     }
+
+    let commanded = await handleCommand(whereTask, valueTask, element_id);
+
+    if (commanded && element_id.endsWith(commanded.returnFieldName) && commanded.returnValue) {
+        replaceTask = commanded.returnValue
+    }
+
+    if (replaceTask) {
+        match = replaceTask
+    } else {
+        match = ""
+    }
+
     return match;
 }
 
@@ -213,7 +231,13 @@ class CommandHandler {
     }
 
     async parseText(data, config) {
-        if (!bSNOW_global_settings && bSNOW_global_settings.quick_adds) {
+        if (!bSNOW_global_settings) {
+            return;
+        }
+        if (!bSNOW_global_settings.quick_adds) {
+            return;
+        }
+        if (!bSNOW_global_settings.actions) {
             return;
         }
         let input = await handleInput(data.newValue, config, data.element_id)
@@ -291,6 +315,26 @@ class u_g_form {
     }
 }
 
+function yoloBtn(task) {
+    handleCommand(task, "*")
+}
+
 if (this.g_form) {
+
+    if (bSNOW_global_settings && bSNOW_global_settings.quick_add_buttons) {
+        let btns = bSNOW_global_settings.quick_add_buttons;
+        for (let i = 0; i < btns.length; i++) {
+            if (btns[i].tableNames.includes(window.g_form.tableName)) {
+                let g_form_header_bar = document.querySelector("#incident\\.form_header nav > div > div.navbar-right");
+                let g_form_header_bar_button = document.createElement("button")
+                g_form_header_bar_button.textContent = btns[i].code;
+                g_form_header_bar_button.addEventListener('click', function(event){
+                    yoloBtn(event.target.textContent);
+                });
+                g_form_header_bar.insertBefore(g_form_header_bar_button, g_form_header_bar.firstChild)
+            }
+        }
+    }
+    
     new u_g_form()
 }
