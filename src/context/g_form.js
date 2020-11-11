@@ -1,17 +1,43 @@
-function simpleFlattener(obj, parent, res = {}) {
-    // Stolen from StackOverflow
-    for(let key in obj){
-        let propName = parent ? parent + '.' + key : key;
-        if(typeof obj[key] == 'object'){
-            simpleFlattener(obj[key], propName, res);
-        } else {
-            res[propName] = obj[key];
-        }
-    }
-    return res;
+
+function g_xmlGetter(path) {
+    return new Promise((resolve, reject) => {
+        fetch(path, {
+            method: 'GET',
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            }
+        }).then(r => resolve(r))
+    })
 }
 
-function handleCommand(whereTask, valueTask) {
+async function ObjectByString(o, s) {
+    // Reference Code: https://stackoverflow.com/a/6491621
+    s = s.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
+    s = s.replace(/^\./, '');           // strip a leading dot
+    var a = s.split('.');
+    for (var i = 0, n = a.length; i < n; ++i) {
+        var k = a[i];
+
+        if (o[k] && o[k]["link"] && typeof o[k] !== "string") {
+            let x_main = await g_xmlGetter(o[k]["link"])
+            let x_main_json = await x_main.json()
+            if (x_main_json && x_main_json.result) {
+                o[k] = { ...x_main_json.result }
+            }
+        }
+
+        if (k in o) {
+            o = o[k];
+        } else {
+            return;
+        }
+    }
+    return o;
+}
+
+async function handleCommand(whereTask, valueTask) {
     let specifications = bSNOW_global_settings.quick_adds;
 
     let parameters = valueTask.match(new RegExp(/\(.*\)/g, "g"))
@@ -43,7 +69,7 @@ function handleCommand(whereTask, valueTask) {
                         user: window.NOW.user
                     }
                 } : {}
-                let flattened_g_formDataCache = simpleFlattener(g_formDataCache)
+
                 for (let j = 0; j < turboMatches.length; j++) {
                     let savedTurboMatch = turboMatches[j];
                     turboMatches[j] = turboMatches[j].substring(1, turboMatches[j].length - 1);
@@ -51,35 +77,45 @@ function handleCommand(whereTask, valueTask) {
                     if (turboMatches[j].includes(".")) {
                         mainValue = turboMatches[j].split(".")[0]
                     }
-                    if (!g_formDataCache[mainValue] && !flattened_g_formDataCache[turboMatches[j]]) {
-                        let g_formElement = window.g_form.elements.find(element => element.fieldName === mainValue)
-                        if (!g_formElement) {
-                            continue;
-                        }
-                        switch (g_formElement.type) {
-                            case "reference":
-                                g_formDataCache[g_formElement.fieldName] = {}
-                                let xper = window.g_form.getReference(g_formElement.fieldName).rows[0];
-                                for (let k = 0; k < xper.length; k++) {
-                                    g_formDataCache[g_formElement.fieldName][xper[k].name] = xper[k].value;
-                                }
-                                break;
-                            case "integer":
-                                g_formDataCache[g_formElement.fieldName] = window.g_form.getOption(
-                                    g_formElement.fieldName,
-                                    document.gsft_main.g_form.getValue(g_formElement.fieldName)
-                                ).textContent
-                                break;
-                            default:
-                                g_formDataCache[g_formElement.fieldName] = window.g_form.getValue(g_formElement.fieldName)
-                                break;
+                    if (!g_formDataCache[mainValue]) {
+                        try {
+                            let x_main = await g_xmlGetter(`${location.origin}/api/now/v1/table/${window.g_form.tableName}/${window.g_form.getUniqueValue()}`)
+                            if (x_main.status === 404) {
+                                throw new Error("Not Found")
+                            }
+                            let x_main_json = await x_main.json()
+                            if (x_main_json && x_main_json.result) {
+                                g_formDataCache = { ...x_main_json.result, ...g_formDataCache }
+                            }
+                        } catch (e) {
+                            let g_formElement = window.g_form.elements.find(element => element.fieldName === mainValue)
+                            if (!g_formElement) {
+                                continue;
+                            }
+                            switch (g_formElement.type) {
+                                case "reference":
+                                    if (window.g_form.tableName === "task_time_worked" && g_formElement.fieldName === "task") {
+                                        let x_main_sub = await g_xmlGetter(`${location.origin}/api/now/v1/table/task/${window.g_form.getValue(g_formElement.fieldName)}`)
+                                        let x_main_json_sub = await x_main_sub.json()
+                                        if (x_main_json_sub && x_main_json_sub.result) {
+                                            g_formDataCache[g_formElement.fieldName] = { ...x_main_json_sub.result }
+                                        } else {
+                                            g_formDataCache[g_formElement.fieldName] = window.g_form.getValue(g_formElement.fieldName)
+                                        }
+                                    } else {
+                                        g_formDataCache[g_formElement.fieldName] = window.g_form.getValue(g_formElement.fieldName)
+                                    }
+                                    break;
+                                default:
+                                    g_formDataCache[g_formElement.fieldName] = window.g_form.getValue(g_formElement.fieldName)
+                                    break;
+                            }
                         }
                     }
 
-                    flattened_g_formDataCache = simpleFlattener(g_formDataCache)
-
-                    if (flattened_g_formDataCache[turboMatches[j]]) {
-                        turbulenceValue = turbulenceValue.replace(savedTurboMatch, flattened_g_formDataCache[turboMatches[j]])
+                    let fsLogix = await ObjectByString(g_formDataCache, turboMatches[j])
+                    if (fsLogix) {
+                        turbulenceValue = turbulenceValue.replace(savedTurboMatch, fsLogix)
                     }
                 }
             }
@@ -92,67 +128,81 @@ function handleCommand(whereTask, valueTask) {
     };
 }
 
-
-function handleInput(value, config, element_id) {
-    let newValue = value.replace(config.regex, function (match) {
-        match = match.substring(config.beforeLimiter.length, match.length - config.afterLimiter.length)
-        if (match.match(/:(?![^(]*[)])/)) {
-            let currentTasks = match.split(/:(?![^(]*[)])/);
-            for (let i = 0; i < currentTasks.length; i++) {
-                let replaceTask;
-                if (currentTasks[i].match(/=(?![^(]*[)])/)) {
-                    let contentSpecifics = currentTasks[i].split(/=(?![^(]*[)])/);
-                    let whereTask = contentSpecifics[0]
-                    let valueTask = contentSpecifics[1]
-
-                    let commanded = handleCommand(whereTask, valueTask);
-                    if (element_id.endsWith(commanded.returnFieldName) && commanded.returnValue) {
-                        replaceTask = commanded.returnValue
-                    } else if (commanded.returnFieldName && commanded.returnValue) {
-                        window.g_form.setValue(commanded.returnFieldName, commanded.returnValue)
-                    }
-                } else {
-                    let commanded = handleCommand(element_id, currentTasks[i]);
-                    if (element_id.endsWith(commanded.returnFieldName) && commanded.returnValue) {
-                        replaceTask = commanded.returnValue
-                    }
-                }
-                if (replaceTask) {
-                    match = match.replace(currentTasks[i], replaceTask)
-                } else {
-                    match = match.replace(":" + currentTasks[i], "")
-                    match = match.replace(currentTasks[i] + ":", "")
-                    match = match.replace(currentTasks[i], "")
-                }
-            }
-        } else {
+async function matchYo (match, config, element_id) {
+    match = match.substring(config.beforeLimiter.length, match.length - config.afterLimiter.length)
+    if (match.match(/:(?![^(]*[)])/)) {
+        let currentTasks = match.split(/:(?![^(]*[)])/);
+        for (let i = 0; i < currentTasks.length; i++) {
             let replaceTask;
-            if (match.match(/=(?![^(]*[)])/)) {
-                let contentSpecifics = match.split(/=(?![^(]*[)])/);
+            if (currentTasks[i].match(/=(?![^(]*[)])/)) {
+                let contentSpecifics = currentTasks[i].split(/=(?![^(]*[)])/);
                 let whereTask = contentSpecifics[0]
                 let valueTask = contentSpecifics[1]
 
-                let commanded = handleCommand(whereTask, valueTask);
+                let commanded = await handleCommand(whereTask, valueTask);
                 if (element_id.endsWith(commanded.returnFieldName) && commanded.returnValue) {
                     replaceTask = commanded.returnValue
                 } else if (commanded.returnFieldName && commanded.returnValue) {
-                    window.g_form.setValue(commanded.returnFieldName, commanded.returnValue)
+                    await window.g_form.setValue(commanded.returnFieldName, commanded.returnValue)
                 }
             } else {
-                let commanded = handleCommand(element_id, match);
+                let commanded = await handleCommand(element_id, currentTasks[i]);
                 if (element_id.endsWith(commanded.returnFieldName) && commanded.returnValue) {
                     replaceTask = commanded.returnValue
                 }
             }
             if (replaceTask) {
-                match = replaceTask
+                match = match.replace(currentTasks[i], replaceTask)
             } else {
-                match = ""
+                match = match.replace(":" + currentTasks[i], "")
+                match = match.replace(currentTasks[i] + ":", "")
+                match = match.replace(currentTasks[i], "")
             }
         }
-        return match;
-    })
-    return newValue
+    } else {
+        let replaceTask;
+        if (match.match(/=(?![^(]*[)])/)) {
+            let contentSpecifics = match.split(/=(?![^(]*[)])/);
+            let whereTask = contentSpecifics[0]
+            let valueTask = contentSpecifics[1]
+
+            let commanded = await handleCommand(whereTask, valueTask);
+            if (element_id.endsWith(commanded.returnFieldName) && commanded.returnValue) {
+                replaceTask = commanded.returnValue
+            } else if (commanded.returnFieldName && commanded.returnValue) {
+                await window.g_form.setValue(commanded.returnFieldName, commanded.returnValue)
+            }
+        } else {
+            let commanded = await handleCommand(element_id, match);
+            if (element_id.endsWith(commanded.returnFieldName) && commanded.returnValue) {
+                replaceTask = commanded.returnValue
+            }
+        }
+        if (replaceTask) {
+            match = replaceTask
+        } else {
+            match = ""
+        }
+    }
+    return match;
+}
+
+async function handleInput(value, config, element_id) {
+    let matches = value.match(config.regex)
+
+    let force_replace = false;
+
+    if (!matches) {
+        return {force_replace, value};
+    }
+
+    for (let i = 0; i < matches.length; i++) {
+        let matched = await matchYo(matches[i], config, element_id)
+        value = value.replace(matches[i], matched);
+        force_replace = true
+    }
+
+    return {force_replace, value};
 }
 
 class CommandHandler {
@@ -161,13 +211,14 @@ class CommandHandler {
         this.quickAdds = [];
     }
 
-    parseText(data, config) {
+    async parseText(data, config) {
         if (!bSNOW_global_settings && bSNOW_global_settings.quick_adds) {
             return;
         }
-        let input = handleInput(data.newValue, config, data.element_id)
-        if (input !== data.newValue) {
-            window.g_form.setValue(data.element_id, input)
+        let input = await handleInput(data.newValue, config, data.element_id)
+        if (input.value !== data.newValue || input.force_replace) {
+            await window.g_form.setValue(data.element_id, "")
+            await window.g_form.setValue(data.element_id, input.value)
         }
     }
 }
@@ -185,8 +236,8 @@ class u_g_form {
 
         this.addUserChangeListenerToElementsDynamically('string')
 
-        window.g_form.onUserChangeValue((e, p, n) => {
-            this.commandHandler.parseText({
+        window.g_form.onUserChangeValue(async (e, p, n) => {
+            await this.commandHandler.parseText({
                 element_id: e,
                 previousValue: p,
                 newValue: n
