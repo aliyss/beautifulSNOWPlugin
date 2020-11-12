@@ -158,7 +158,6 @@ async function handleCommand(whereTask, valueTask, element_id=null) {
                     }
                 }
 
-                turbulenceElement.id = runner_actions[ki].key
                 if (element_id && element_id.endsWith(runner_actions[ki].key)) {
                     turbulenceValueMain = turbulenceValue;
                     turbulenceElement.id = element_id;
@@ -325,7 +324,7 @@ if (this.g_form) {
         let btns = bSNOW_global_settings.quick_add_buttons;
         for (let i = 0; i < btns.length; i++) {
             if (btns[i].tableNames.includes(window.g_form.tableName)) {
-                let g_form_header_bar = document.querySelector("#incident\\.form_header nav > div > div.navbar-right");
+                let g_form_header_bar = document.querySelector(`#${window.g_form.tableName}\\.form_header nav > div > div.navbar-right`);
                 let g_form_header_bar_button = document.createElement("button")
                 g_form_header_bar_button.textContent = btns[i].code;
                 g_form_header_bar_button.addEventListener('click', function(event){
