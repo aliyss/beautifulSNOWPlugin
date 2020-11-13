@@ -47,6 +47,12 @@ function waitForElement(selector) {
             document.head.appendChild(scriptHeader);
             document.head.appendChild(scriptGLink);
             document.body.appendChild(scriptGForm);
+
+            chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+                console.log(document.querySelectorAll('#gsft_main')[0] ? document.querySelectorAll('#gsft_main')[0].contentWindow.document.g_form : 'null')
+                if (request.method === "getVars")
+                    sendResponse({bSnow: bSNOW_global_settings})
+            });
         }
 
     })

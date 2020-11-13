@@ -37,6 +37,166 @@ async function ObjectByString(o, s) {
     return o;
 }
 
+function executeActionValue(runner_action, value) {
+    if (window.g_form.isDisabled(runner_action.key)) {
+        return;
+    }
+
+    switch (runner_action.type) {
+        case "ref":
+
+            let displayBox_ac_columns;
+            if (window.g_form.getDisplayBox(runner_action.key) && window.g_form.getDisplayBox(runner_action.key).getAttribute('ac_columns')) {
+                displayBox_ac_columns = window.g_form.getDisplayBox(runner_action.key).getAttribute('ac_columns').split(";")
+            }
+
+            let ref_glide_ui_element = g_form.getGlideUIElement(runner_action.key)
+            if (ref_glide_ui_element.reference) {
+                var gr = new GlideRecord(ref_glide_ui_element.reference);
+                gr.addQuery('sys_id', value);
+                gr.addQuery('ORname', value)
+                gr.addQuery('ORdisplay', value)
+                if (displayBox_ac_columns) {
+                    for (let i = 0; i < displayBox_ac_columns.length; i++) {
+                        gr.addQuery('OR' + displayBox_ac_columns[i], value)
+                    }
+                }
+                gr.query();
+
+                let multiHandlerElement = window.g_form.getElement(runner_action.key)
+                let multiHandlerElement_isSelect;
+                if (multiHandlerElement) {
+                    multiHandlerElement_isSelect = multiHandlerElement.parentElement.getElementsByTagName("select")[0];
+                }
+                let breaker;
+                while (gr.next()) {
+                    if (multiHandlerElement_isSelect) {
+                        for (let i = 0; i < multiHandlerElement_isSelect.options.length; i++) {
+                            if (multiHandlerElement_isSelect.options[i].value === gr.sys_id) {
+                                window.g_form.setValue(runner_action.key, "")
+                                window.g_form.setValue(runner_action.key, multiHandlerElement_isSelect.options[i].value)
+                                breaker = true;
+                            }
+                            if (breaker) {
+                                break;
+                            }
+                        }
+                        if (breaker) {
+                            break;
+                        }
+                    } else {
+                        window.g_form.setValue(runner_action.key, "")
+                        window.g_form.setValue(runner_action.key, gr.sys_id)
+                        breaker = true;
+                    }
+                    if (breaker) {
+                        break;
+                    }
+                }
+                break;
+            }
+            break;
+        case "opt":
+            let elopements_control = window.g_form.getControl(runner_action.key)
+            let elopements;
+            if (elopements_control) {
+                elopements = elopements_control.parentElement.getElementsByTagName("select")[0];
+            }
+            if (elopements) {
+                for (let i = 0; i < elopements.options.length; i++) {
+                    if (elopements.options[i].text.toLowerCase().startsWith(value.toLowerCase())) {
+                        window.g_form.setValue(runner_action.key, "")
+                        window.g_form.setValue(runner_action.key, elopements.options[i].value)
+                        break;
+                    } else if (elopements.options[i].value === value) {
+                        window.g_form.setValue(runner_action.key, "")
+                        window.g_form.setValue(runner_action.key, elopements.options[i].value)
+                        break;
+                    }
+                }
+            }
+            break;
+        case "date":
+
+            if (runner_action.exe === "==") {
+                window.g_form.setValue(runner_action.key, "")
+                window.g_form.setValue(runner_action.key, value)
+                break;
+            }
+
+            let currentDate;
+            let dateParser = value.split(" ");
+            if (runner_action.exe === "=+" || runner_action.exe === "=-") {
+                currentDate = new Date()
+            } else if (runner_action.exe === "+=" || runner_action.exe === "=-") {
+                currentDate = new Date(window.g_form.getValue(runner_action.key))
+            }
+
+            if (dateParser && currentDate) {
+                if (runner_action.exe.includes("+")) {
+                    for (let i = 0; i < dateParser.length; i++) {
+                        if (dateParser[i].endsWith("d")) {
+                            currentDate.setDate(currentDate.getDate() + parseInt(dateParser[i].match(/\d+/)[0]))
+                        } else if (dateParser[i].endsWith("M")) {
+                            currentDate.setMonth(currentDate.getMonth() + parseInt(dateParser[i].match(/\d+/)[0]))
+                        } else if (dateParser[i].endsWith("Y")) {
+                            currentDate.setFullYear(currentDate.getFullYear() + parseInt(dateParser[i].match(/\d+/)[0]))
+                        } else if (dateParser[i].endsWith("h")) {
+                            currentDate.setHours(currentDate.getHours() + parseInt(dateParser[i].match(/\d+/)[0]))
+                        } else if (dateParser[i].endsWith("m")) {
+                            currentDate.setMinutes(currentDate.getMinutes() + parseInt(dateParser[i].match(/\d+/)[0]))
+                        } else if (dateParser[i].endsWith("s")) {
+                            currentDate.setSeconds(currentDate.getSeconds() + parseInt(dateParser[i].match(/\d+/)[0]))
+                        }
+                    }
+                } else if (runner_action.exe.includes("-")) {
+                    for (let i = 0; i < dateParser.length; i++) {
+                        if (dateParser[i].endsWith("d")) {
+                            currentDate.setDate(currentDate.getDate() - parseInt(dateParser[i].match(/\d+/)[0]))
+                        } else if (dateParser[i].endsWith("M")) {
+                            currentDate.setMonth(currentDate.getMonth() - parseInt(dateParser[i].match(/\d+/)[0]))
+                        } else if (dateParser[i].endsWith("Y")) {
+                            currentDate.setFullYear(currentDate.getFullYear() - parseInt(dateParser[i].match(/\d+/)[0]))
+                        } else if (dateParser[i].endsWith("h")) {
+                            currentDate.setHours(currentDate.getHours() - parseInt(dateParser[i].match(/\d+/)[0]))
+                        } else if (dateParser[i].endsWith("m")) {
+                            currentDate.setMinutes(currentDate.getMinutes() - parseInt(dateParser[i].match(/\d+/)[0]))
+                        } else if (dateParser[i].endsWith("s")) {
+                            currentDate.setSeconds(currentDate.getSeconds() - parseInt(dateParser[i].match(/\d+/)[0]))
+                        }
+                    }
+                }
+
+                let valDate = `${("0" + currentDate.getDate()).slice(-2)}.${("0" + (currentDate.getMonth() + 1)).slice(-2)}.${currentDate.getFullYear()}`
+                window.g_form.setValue(runner_action.key, "")
+                window.g_form.setValue(runner_action.key, valDate)
+            }
+            break;
+        case "val":
+            if (runner_action.exe === "==") {
+                window.g_form.setValue(runner_action.key, "")
+                window.g_form.setValue(runner_action.key, value)
+                break;
+            } else if (runner_action.exe === "+=") {
+                let val = window.g_form.getValue(runner_action.key)
+                val = value + "\n" + val
+                window.g_form.setValue(runner_action.key, "")
+                window.g_form.setValue(runner_action.key, val)
+                break;
+            } else if (runner_action.exe === "=+") {
+                let val = window.g_form.getValue(runner_action.key)
+                val = val + "\n" + value
+                window.g_form.setValue(runner_action.key, "")
+                window.g_form.setValue(runner_action.key, val)
+            }
+            break;
+        default:
+            window.g_form.setValue(runner_action.key, "")
+            window.g_form.setValue(runner_action.key, value)
+            break;
+    }
+}
+
 async function handleCommand(whereTask, valueTask, element_id=null) {
     let specifications = bSNOW_global_settings.quick_adds;
     let specification_buttons = bSNOW_global_settings.quick_add_buttons;
@@ -132,14 +292,11 @@ async function handleCommand(whereTask, valueTask, element_id=null) {
                                 }
                                 switch (g_formElement.type) {
                                     case "reference":
-                                        if (window.g_form.tableName === "task_time_worked" && g_formElement.fieldName === "task") {
-                                            let x_main_sub = await g_xmlGetter(`${location.origin}/api/now/v1/table/task/${window.g_form.getValue(g_formElement.fieldName)}`)
-                                            let x_main_json_sub = await x_main_sub.json()
-                                            if (x_main_json_sub && x_main_json_sub.result) {
-                                                g_formDataCache[g_formElement.fieldName] = { ...x_main_json_sub.result }
-                                            } else {
-                                                g_formDataCache[g_formElement.fieldName] = window.g_form.getValue(g_formElement.fieldName)
-                                            }
+                                        let reffrerer = window.g_form.getGlideUIElement(g_formElement.fieldName).reference
+                                        let x_main_sub = await g_xmlGetter(`${location.origin}/api/now/v1/table/${reffrerer}/${window.g_form.getValue(g_formElement.fieldName)}`)
+                                        let x_main_json_sub = await x_main_sub.json()
+                                        if (x_main_json_sub && x_main_json_sub.result) {
+                                            g_formDataCache[g_formElement.fieldName] = { ...x_main_json_sub.result }
                                         } else {
                                             g_formDataCache[g_formElement.fieldName] = window.g_form.getValue(g_formElement.fieldName)
                                         }
@@ -162,8 +319,7 @@ async function handleCommand(whereTask, valueTask, element_id=null) {
                     turbulenceValueMain = turbulenceValue;
                     turbulenceElement.id = element_id;
                 } else {
-                    window.g_form.setValue(runner_actions[ki].key, "")
-                    window.g_form.setValue(runner_actions[ki].key, turbulenceValue)
+                    executeActionValue(runner_actions[ki], turbulenceValue)
                 }
             }
             break;
@@ -171,7 +327,7 @@ async function handleCommand(whereTask, valueTask, element_id=null) {
     }
 
     return {
-        returnFieldName: turbulenceElement.id,
+        returnFieldName: turbulenceElement,
         returnValue: turbulenceValueMain
     };
 }
@@ -192,7 +348,7 @@ async function matchYo (match, config, element_id) {
 
     let commanded = await handleCommand(whereTask, valueTask, element_id);
 
-    if (commanded && element_id.endsWith(commanded.returnFieldName) && commanded.returnValue) {
+    if (commanded && element_id.endsWith(commanded.returnFieldName.id) && commanded.returnValue) {
         replaceTask = commanded.returnValue
     }
 

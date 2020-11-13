@@ -6,7 +6,7 @@ function handleTextNode(textNode, currentDocument) {
         return;
     }
     let origText = textNode.textContent;
-    if (!bSNOW_global_settings && bSNOW_global_settings.global_replacements) {
+    if (!bSNOW_global_settings && !bSNOW_global_settings.global_replacements) {
         return;
     }
     for (let i = 0; i < bSNOW_global_settings.global_replacements.length; i++) {

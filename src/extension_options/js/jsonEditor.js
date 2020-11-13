@@ -16,6 +16,20 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_
         contentConfig.actions = []
     }
 
+    if (!contentConfig._executions) {
+        contentConfig._executions = ["==", "+=", "=+", "=-", "-="]
+    }
+
+    JSONEditor.defaults.callbacks.template = {
+        "editor_executionsFilter": (jseditor, e) => {
+            if (e.watched._type === 'val' && (e.item === "-=" || e.item === "=-")) return "";
+            if (e.watched._type === 'ref' && e.item !== "==") return "";
+            if (e.watched._type === 'opt' && e.item !== "==") return "";
+            return e.item;
+        },
+        "editor_executionsValue": (jseditor, e) => e.item
+    };
+
     editor = new JSONEditor(document.getElementById('editor_holder'), {
         schema: {
             type: "object",
@@ -25,6 +39,16 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_
                 disable_collapse: true
             },
             properties: {
+                _executions: {
+                    type: "array",
+                    format: "table",
+                    options: {
+                        hidden: true
+                    },
+                    items: {
+                        type: "string"
+                    }
+                },
                 global_replacements: {
                     type: "array",
                     format: "table",
@@ -104,9 +128,10 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_
                                 title: "Runners",
                                 uniqueItems: true,
                                 options: {
-                                    input_width: '120vh'
+                                    input_width: '100vh'
                                 },
                                 items: {
+                                    id: "arr_action_item_runner",
                                     type: "object",
                                     name: "Row",
                                     properties: {
@@ -115,7 +140,7 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_
                                             type: "string",
                                             options: {
                                                 input_height: '40px',
-                                                input_width: '400px'
+                                                input_width: '300px'
                                             }
                                         },
                                         type: {
@@ -123,10 +148,27 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_
                                             type: "string",
                                             options: {
                                                 input_height: '40px',
-                                                input_width: '200px'
+                                                input_width: '130px'
                                             },
-                                            enumSource: [["val", "ref"]],
+                                            enumSource: [["val", "ref", "date", "opt"]],
                                             default: "val"
+                                        },
+                                        exe: {
+                                            title: "Execution",
+                                            type: "string",
+                                            options: {
+                                                input_height: '40px',
+                                                input_width: '100px',
+                                            },
+                                            watch: {
+                                                "__executions": "_executions",
+                                                "_type": "arr_action_item_runner.type"
+                                            },
+                                            enumSource: [{
+                                                source: "__executions",
+                                                filter: "editor_executionsFilter",
+                                                value: "editor_executionsValue"
+                                            }],
                                         },
                                         value: {
                                             title: "Field Value",

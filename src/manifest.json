@@ -6,7 +6,9 @@
 	"author": "Aliyss Snow",
 	"permissions": [
 		"storage",
-		"unlimitedStorage"
+		"unlimitedStorage",
+		"activeTab",
+		"tabs"
 	],
 	"content_scripts": [
 		{
