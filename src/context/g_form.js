@@ -24,12 +24,17 @@ async function ObjectByString(o, s) {
             let x_main = await g_xmlGetter(o[k]["link"])
             let x_main_json = await x_main.json()
             if (x_main_json && x_main_json.result) {
-                o[k] = { ...x_main_json.result }
+                o[k] = {...x_main_json.result}
             }
+        }
+
+        if (k === "prompt()") {
+            k = prompt("input value")
         }
 
         if (k in o) {
             o = o[k];
+            console.log(k, o)
         } else {
             return;
         }
@@ -201,6 +206,7 @@ async function handleCommand(whereTask, valueTask, element_id=null) {
     let specifications = bSNOW_global_settings.quick_adds;
     let specification_buttons = bSNOW_global_settings.quick_add_buttons;
     let special_actions = bSNOW_global_settings.actions;
+    let advanced_settings = bSNOW_global_settings.advanced_settings;
 
     let parameters = valueTask.match(new RegExp(/\(.*\)/g, "g"))
     let replacementParameter = ""
@@ -276,6 +282,23 @@ async function handleCommand(whereTask, valueTask, element_id=null) {
                             mainValue = turboMatches[j].split(".")[0]
                         }
                         if (!g_formDataCache[mainValue]) {
+
+                            let c = document.querySelectorAll("#activity_field_filter_popover input")
+                            let add_param = advanced_settings ? advanced_settings.custom_history_line_query : "";
+                            if (!add_param) {
+                                for (i = 0; i < c.length; i++) {
+                                    let yo = window.angular.element(c[i]).scope().field
+                                    if (yo && yo.isActive) {
+                                        if (add_param) {
+                                            add_param += ("^ORlabel=" + yo.label)
+                                        } else {
+                                            add_param = "^label=" + yo.label
+                                        }
+                                    }
+                                }
+                            }
+
+
                             try {
                                 let x_main = await g_xmlGetter(`${location.origin}/api/now/v1/table/${window.g_form.tableName}/${window.g_form.getUniqueValue()}`)
                                 if (x_main.status === 404) {
@@ -283,6 +306,10 @@ async function handleCommand(whereTask, valueTask, element_id=null) {
                                 }
                                 let x_main_json = await x_main.json()
                                 if (x_main_json && x_main_json.result) {
+                                    x_main_json.result.sys_history_line = {
+                                        link: `${location.origin}/api/now/v1/table/sys_history_line?sysparm_query=set.id=${window.g_form.getUniqueValue()+ add_param}^ORDERBYDESCupdate_time`,
+                                        value: `${window.g_form.getUniqueValue()}`
+                                    }
                                     g_formDataCache = { ...x_main_json.result, ...g_formDataCache }
                                 }
                             } catch (e) {
@@ -296,6 +323,10 @@ async function handleCommand(whereTask, valueTask, element_id=null) {
                                         let x_main_sub = await g_xmlGetter(`${location.origin}/api/now/v1/table/${reffrerer}/${window.g_form.getValue(g_formElement.fieldName)}`)
                                         let x_main_json_sub = await x_main_sub.json()
                                         if (x_main_json_sub && x_main_json_sub.result) {
+                                            x_main_json_sub.result.sys_history_line = {
+                                                link: `${location.origin}/api/now/v1/table/sys_history_line?sysparm_query=set.id=${window.g_form.getUniqueValue() + add_param}^ORDERBYDESCupdate_time`,
+                                                value: `${window.g_form.getUniqueValue()}`
+                                            }
                                             g_formDataCache[g_formElement.fieldName] = { ...x_main_json_sub.result }
                                         } else {
                                             g_formDataCache[g_formElement.fieldName] = window.g_form.getValue(g_formElement.fieldName)

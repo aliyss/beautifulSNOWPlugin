@@ -1,6 +1,6 @@
 var editor;
 
-chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_add_buttons'], function (result) {
+chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_add_buttons', 'advanced_settings'], function (result) {
     let contentConfig = result;
 
     if (!contentConfig.global_replacements) {
@@ -14,6 +14,11 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_
     }
     if (!contentConfig.actions) {
         contentConfig.actions = []
+    }
+    if (!contentConfig.advanced_settings) {
+        contentConfig.advanced_settings = {
+            custom_history_line_query: ""
+        }
     }
 
     if (!contentConfig._executions) {
@@ -340,6 +345,19 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_
                         }
                     }
                 },
+                advanced_settings: {
+                    type: "object",
+                    title: "Advanced Settings",
+                    properties: {
+                        custom_history_line_query: {
+                            title: "Custom History Line Query",
+                            type: "string",
+                            options: {
+                                input_height: '40px'
+                            }
+                        },
+                    }
+                }
             }
         },
         theme: 'bootstrap4',

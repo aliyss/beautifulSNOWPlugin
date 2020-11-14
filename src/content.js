@@ -40,7 +40,7 @@ function waitForElement(selector) {
             let scriptHeader = document.createElement('script');
             scriptHeader.id = "global_beautiful_snow"
 
-            chrome.storage.sync.get(['global_replacements', 'quick_adds', 'quick_add_buttons', 'actions'], function (result) {
+            chrome.storage.sync.get(['global_replacements', 'quick_adds', 'quick_add_buttons', 'actions', 'advanced_settings'], function (result) {
                 scriptHeader.textContent += 'var bSNOW_global_settings = ' + JSON.stringify(result) + ';\n';
             });
 
