@@ -125,6 +125,9 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
                     format: "table",
                     title: "Actions",
                     uniqueItems: true,
+                    options: {
+                        expanded: true
+                    },
                     items: {
                         type: "object",
                         format: "categories",
@@ -137,7 +140,8 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
                                 type: "string",
                                 options: {
                                     input_height: '40px',
-                                    input_width: '200px'
+                                    input_width: '200px',
+                                    expanded: true
                                 }
                             },
                             action_id: {
@@ -151,7 +155,71 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
                             action_application: {
                                 title: "Application",
                                 format: "categories",
+                                options: {
+                                    collapsed: true,
+                                    expanded: true
+                                },
                                 properties: {
+                                    keys: {
+                                        type: "array",
+                                        format: "table",
+                                        title: "Runners",
+                                        uniqueItems: true,
+                                        options: {
+                                            expanded: true,
+                                            disable_collapse: true
+                                        },
+                                        items: {
+                                            id: "arr_action_item_runner",
+                                            type: "object",
+                                            name: "Row",
+                                            properties: {
+                                                key: {
+                                                    title: "Field ID",
+                                                    type: "string",
+                                                    options: {
+                                                        input_height: '40px',
+                                                        input_width: '200px'
+                                                    }
+                                                },
+                                                type: {
+                                                    title: "Field Type",
+                                                    type: "string",
+                                                    options: {
+                                                        input_height: '40px',
+                                                        input_width: '100px'
+                                                    },
+                                                    enumSource: [{source: ["val", "ref", "date", "opt"]}],
+                                                },
+                                                exe: {
+                                                    title: "Execution",
+                                                    type: "string",
+                                                    options: {
+                                                        input_height: '40px',
+                                                        input_width: '100px',
+                                                    },
+                                                    watch: {
+                                                        "__executions": "_executions",
+                                                        "_type": "arr_action_item_runner.type"
+                                                    },
+                                                    enumSource: [{
+                                                        source: "__executions",
+                                                        filter: "editor_executionsFilter",
+                                                        value: "editor_executionsValue"
+                                                    }],
+                                                },
+                                                value: {
+                                                    title: "Field Value",
+                                                    type: "string",
+                                                    format: "xhtml",
+                                                    options: {
+                                                        input_height: '40px',
+                                                        expanded: true
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
                                     conditional_for_type: {
                                         title: "Conditional For",
                                         type: "object",
@@ -219,66 +287,6 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
                                                     options: {
                                                         input_height: '40px',
                                                         input_width: '200px',
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    },
-                                    keys: {
-                                        type: "array",
-                                        format: "table",
-                                        title: "Runners",
-                                        uniqueItems: true,
-                                        options: {
-                                            expanded: true,
-                                            disable_collapse: true
-                                        },
-                                        items: {
-                                            id: "arr_action_item_runner",
-                                            type: "object",
-                                            name: "Row",
-                                            properties: {
-                                                key: {
-                                                    title: "Field ID",
-                                                    type: "string",
-                                                    options: {
-                                                        input_height: '40px',
-                                                        input_width: '200px'
-                                                    }
-                                                },
-                                                type: {
-                                                    title: "Field Type",
-                                                    type: "string",
-                                                    options: {
-                                                        input_height: '40px',
-                                                        input_width: '100px'
-                                                    },
-                                                    enumSource: [{source: ["val", "ref", "date", "opt"]}],
-                                                },
-                                                exe: {
-                                                    title: "Execution",
-                                                    type: "string",
-                                                    options: {
-                                                        input_height: '40px',
-                                                        input_width: '100px',
-                                                    },
-                                                    watch: {
-                                                        "__executions": "_executions",
-                                                        "_type": "arr_action_item_runner.type"
-                                                    },
-                                                    enumSource: [{
-                                                        source: "__executions",
-                                                        filter: "editor_executionsFilter",
-                                                        value: "editor_executionsValue"
-                                                    }],
-                                                },
-                                                value: {
-                                                    title: "Field Value",
-                                                    type: "string",
-                                                    format: "xhtml",
-                                                    options: {
-                                                        input_height: '40px',
-                                                        expanded: true
                                                     }
                                                 }
                                             }
