@@ -229,7 +229,51 @@ async function retrievableActionValue(runner_action) {
         turbulenceValue = await parseThroughReg("$" + runner_action.if_field_id + "$")
     }
 
-    switch (runner_action.type) {
+    switch (runner_action.if_field_type) {
+        case "date":
+            let currentDate = new Date();
+
+            let strdate = window.g_form.getValue(runner_action.if_field_id)
+            let luldate = strdate.split(" ")
+            let plaindate = luldate[0].split(".")
+            if (window.g_form.getGlideUIElement(runner_action.if_field_id).type === "glide_date_time") {
+                let xdate = luldate[1].split(":")
+                currentDate = new Date(plaindate[2], plaindate[1] - 1, plaindate[0], xdate[0], xdate[1] - 1, xdate[2])
+            } else {
+                currentDate = new Date(plaindate[2], plaindate[1] - 1, plaindate[0])
+            }
+
+            let partialDate = null;
+
+            let strdateX = runner_action.if_field_value
+            let luldateX = strdateX.split(" ")
+            let plaindateX = luldateX[0].split(".")
+            if (luldateX[1]) {
+                let xdate = luldateX[1].split(":")
+                partialDate = new Date(plaindateX[2], plaindateX[1] - 1, plaindateX[0], xdate[0], xdate[1] - 1, xdate[2])
+            } else {
+                partialDate = new Date(plaindateX[2], plaindateX[1] - 1, plaindateX[0])
+            }
+
+            if (!partialDate) {
+                return false;
+            }
+
+            if (runner_action.if_field_execution === ">=") {
+                if (currentDate >= partialDate) {
+                    return true;
+                }
+            } else if (runner_action.if_field_execution === "<=") {
+                if (currentDate <= partialDate) {
+                    return true;
+                }
+            } else if (runner_action.if_field_execution === "==") {
+                if (currentDate === partialDate) {
+                    return true;
+                }
+            }
+
+            return false;
         default:
             if (turbulenceValue === runner_action.if_field_value) {
                 return true;
@@ -330,6 +374,7 @@ async function parseThroughReg(turbulenceValue) {
 async function handleCommand(whereTask, valueTask, element_id=null) {
     let specifications = bSNOW_global_settings.quick_adds;
     let specification_buttons = bSNOW_global_settings.quick_add_buttons;
+    let specification_auto_runs = bSNOW_global_settings.auto_runs;
     let special_actions = bSNOW_global_settings.actions;
 
     let parameters = valueTask.match(new RegExp(/\(.*\)/g, "g"))
@@ -340,13 +385,25 @@ async function handleCommand(whereTask, valueTask, element_id=null) {
     }
 
     let turbulenceElement;
-    if (element_id === null) {
+    if (element_id === "quick_add_buttons") {
+        element_id = null;
         if (!specification_buttons) {
             return;
         }
         for (let i = 0; i < specification_buttons.length; i++) {
             if (whereTask === specification_buttons[i].code) {
                 turbulenceElement = specification_buttons[i]
+                break;
+            }
+        }
+    } else if (element_id === "auto_runs") {
+        element_id = null;
+        if (!specification_auto_runs) {
+            return;
+        }
+        for (let i = 0; i < specification_auto_runs.length; i++) {
+            if (whereTask === specification_auto_runs[i].code) {
+                turbulenceElement = specification_auto_runs[i]
                 break;
             }
         }
@@ -561,7 +618,11 @@ class u_g_form {
 }
 
 function yoloBtn(task) {
-    handleCommand(task, "*")
+    handleCommand(task, "*", "quick_add_buttons")
+}
+
+function yoloAuto(task) {
+    handleCommand(task, "*", "auto_runs")
 }
 
 if (this.g_form) {
@@ -577,6 +638,15 @@ if (this.g_form) {
                     yoloBtn(event.target.textContent);
                 });
                 g_form_header_bar.insertBefore(g_form_header_bar_button, g_form_header_bar.firstChild)
+            }
+        }
+    }
+
+    if (bSNOW_global_settings && bSNOW_global_settings.auto_runs) {
+        let btns = bSNOW_global_settings.auto_runs;
+        for (let i = 0; i < btns.length; i++) {
+            if (btns[i].tableNames.includes(window.g_form.tableName)) {
+                yoloAuto(btns[i].code);
             }
         }
     }

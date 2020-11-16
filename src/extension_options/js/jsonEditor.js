@@ -1,6 +1,6 @@
 var editor;
 
-chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_add_buttons', 'advanced_settings'], function (result) {
+chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_runs', 'quick_add_buttons', 'advanced_settings'], function (result) {
     let contentConfig = result;
 
     if (!contentConfig.global_replacements) {
@@ -12,8 +12,11 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_
     if (!contentConfig.quick_add_buttons) {
         contentConfig.quick_add_buttons = []
     }
-    if (!contentConfig.actions) {
-        contentConfig.actions = []
+    if (!contentConfig.quick_add_buttons) {
+        contentConfig.quick_add_buttons = []
+    }
+    if (!contentConfig.auto_runs) {
+        contentConfig.auto_runs = []
     }
 
     if (!contentConfig.advanced_settings) {
@@ -441,6 +444,86 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_
                         }
                     }
                 },
+                auto_runs: {
+                    type: "array",
+                    format: "table",
+                    title: "AutoRuns",
+                    uniqueItems: true,
+                    items: {
+                        type: "object",
+                        name: "Row",
+                        properties: {
+                            code: {
+                                title: "Code",
+                                type: "string",
+                                options: {
+                                    input_height: '40px',
+                                    input_width: '100px'
+                                }
+                            },
+                            tableNames: {
+                                type: "array",
+                                format: "table",
+                                title: "Table Names",
+                                uniqueItems: true,
+                                items: {
+                                    title: "Table ID",
+                                    type: "string",
+                                    name: "",
+                                },
+                                options: {
+                                    input_height: '40px',
+                                    input_width: '500px'
+                                }
+                            },
+                            keys: {
+                                type: "array",
+                                format: "table",
+                                title: "Action List",
+                                uniqueItems: true,
+                                options: {
+                                    input_width: '100vh'
+                                },
+                                items: {
+                                    type: "object",
+                                    name: "Row",
+                                    properties: {
+                                        key: {
+                                            name: "Key",
+                                            type: "string",
+                                            options: {
+                                                hidden: true,
+                                                input_height: '40px',
+                                                input_width: '100px'
+                                            },
+                                            default: "*"
+                                        },
+                                        value: {
+                                            title: "Action",
+                                            name: "Action Name",
+                                            type: "string",
+                                            options: {
+                                                input_height: '40px',
+                                                input_width: '100vh'
+                                            },
+                                            watch: {
+                                                action_yo: "actions"
+                                            },
+                                            enumSource: [
+                                                ["none"],
+                                                {
+                                                    source: "action_yo",
+                                                    title: "{{item.action_name}}",
+                                                    value: "{{item.action_id}}"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            },
+                        }
+                    }
+                },
                 advanced_settings: {
                     type: "object",
                     title: "Advanced Settings",
@@ -485,7 +568,7 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_
 
         try {
             let parser = editor.getValue();
-            chrome.storage.sync.set(editor.getValue())
+            chrome.storage.sync.set(parser)
             document.getElementById('submit').className = 'btn btn-success';
             document.getElementById('submit').innerText = 'Saving...';
         } catch (e) {
