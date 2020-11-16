@@ -15,6 +15,7 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_
     if (!contentConfig.actions) {
         contentConfig.actions = []
     }
+
     if (!contentConfig.advanced_settings) {
         contentConfig.advanced_settings = {
             custom_history_line_query: ""
@@ -23,6 +24,10 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_
 
     if (!contentConfig._executions) {
         contentConfig._executions = ["==", "+=", "=+", "=-", "-="]
+    }
+
+    if (!contentConfig._conditionals) {
+        contentConfig._conditionals = ["==", ">=", "<="]
     }
 
     JSONEditor.defaults.callbacks.template = {
@@ -44,6 +49,16 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_
                 disable_collapse: true
             },
             properties: {
+                _conditionals: {
+                    type: "array",
+                    format: "table",
+                    options: {
+                        hidden: true
+                    },
+                    items: {
+                        type: "string"
+                    }
+                },
                 _executions: {
                     type: "array",
                     format: "table",
@@ -109,7 +124,10 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_
                     uniqueItems: true,
                     items: {
                         type: "object",
-                        name: "Row",
+                        format: "categories",
+                        options: {
+                            expanded: true
+                        },
                         properties: {
                             action_name: {
                                 title: "Action",
@@ -127,61 +145,139 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_
                                     hidden: true
                                 }
                             },
-                            keys: {
-                                type: "array",
-                                format: "table",
-                                title: "Runners",
-                                uniqueItems: true,
-                                options: {
-                                    input_width: '100vh'
-                                },
-                                items: {
-                                    id: "arr_action_item_runner",
-                                    type: "object",
-                                    name: "Row",
-                                    properties: {
-                                        key: {
-                                            title: "Field ID",
-                                            type: "string",
-                                            options: {
-                                                input_height: '40px',
-                                                input_width: '300px'
+                            action_application: {
+                                title: "Application",
+                                format: "categories",
+                                properties: {
+                                    conditional_for_type: {
+                                        title: "Conditional For",
+                                        type: "object",
+                                        options: {
+                                            expanded: true,
+                                            disable_collapse: true
+                                        },
+                                        properties: {
+                                            for_executions: {
+                                                title: "Execute Actions X times",
+                                                type: "number",
+                                                options: {
+                                                    input_height: '40px',
+                                                    input_width: '200px',
+                                                },
+                                                default: 1
                                             }
+                                        }
+                                    },
+                                    conditional_if_type: {
+                                        type: "array",
+                                        format: "table",
+                                        title: "Conditional Ifs",
+                                        uniqueItems: true,
+                                        options: {
+                                            expanded: true,
+                                            disable_collapse: true
                                         },
-                                        type: {
-                                            title: "Field Type",
-                                            type: "string",
-                                            options: {
-                                                input_height: '40px',
-                                                input_width: '130px'
-                                            },
-                                            enumSource: [["val", "ref", "date", "opt"]],
-                                            default: "val"
+                                        items: {
+                                            properties: {
+                                                if_field_id: {
+                                                    title: "Field ID",
+                                                    type: "string",
+                                                    options: {
+                                                        input_height: '40px',
+                                                        input_width: '200px',
+                                                    }
+                                                },
+                                                if_field_type: {
+                                                    title: "Field Type",
+                                                    type: "string",
+                                                    options: {
+                                                        input_height: '40px',
+                                                        input_width: '200px',
+                                                    },
+                                                    enumSource: [{source: ["val", "ref", "date", "opt"]}],
+                                                },
+                                                if_field_execution: {
+                                                    title: "Execution",
+                                                    type: "string",
+                                                    options: {
+                                                        input_height: '40px',
+                                                        input_width: '200px',
+                                                    },
+                                                    watch: {
+                                                        "__conditionals": "_conditionals"
+                                                    },
+                                                    enumSource: [{
+                                                        source: "__conditionals"
+                                                    }],
+                                                },
+                                                if_field_value: {
+                                                    title: "Value",
+                                                    type: "string",
+                                                    options: {
+                                                        input_height: '40px',
+                                                        input_width: '200px',
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    keys: {
+                                        type: "array",
+                                        format: "table",
+                                        title: "Runners",
+                                        uniqueItems: true,
+                                        options: {
+                                            expanded: true,
+                                            disable_collapse: true
                                         },
-                                        exe: {
-                                            title: "Execution",
-                                            type: "string",
-                                            options: {
-                                                input_height: '40px',
-                                                input_width: '100px',
-                                            },
-                                            watch: {
-                                                "__executions": "_executions",
-                                                "_type": "arr_action_item_runner.type"
-                                            },
-                                            enumSource: [{
-                                                source: "__executions",
-                                                filter: "editor_executionsFilter",
-                                                value: "editor_executionsValue"
-                                            }],
-                                        },
-                                        value: {
-                                            title: "Field Value",
-                                            type: "string",
-                                            format: "xhtml",
-                                            options: {
-                                                input_height: '40px',
-                                                input_width: '100vh'
+                                        items: {
+                                            id: "arr_action_item_runner",
+                                            type: "object",
+                                            name: "Row",
+                                            properties: {
+                                                key: {
+                                                    title: "Field ID",
+                                                    type: "string",
+                                                    options: {
+                                                        input_height: '40px',
+                                                        input_width: '200px'
+                                                    }
+                                                },
+                                                type: {
+                                                    title: "Field Type",
+                                                    type: "string",
+                                                    options: {
+                                                        input_height: '40px',
+                                                        input_width: '100px'
+                                                    },
+                                                    enumSource: [{source: ["val", "ref", "date", "opt"]}],
+                                                },
+                                                exe: {
+                                                    title: "Execution",
+                                                    type: "string",
+                                                    options: {
+                                                        input_height: '40px',
+                                                        input_width: '100px',
+                                                    },
+                                                    watch: {
+                                                        "__executions": "_executions",
+                                                        "_type": "arr_action_item_runner.type"
+                                                    },
+                                                    enumSource: [{
+                                                        source: "__executions",
+                                                        filter: "editor_executionsFilter",
+                                                        value: "editor_executionsValue"
+                                                    }],
+                                                },
+                                                value: {
+                                                    title: "Field Value",
+                                                    type: "string",
+                                                    format: "xhtml",
+                                                    options: {
+                                                        input_height: '40px',
+                                                        expanded: true
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -388,11 +484,11 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_
     document.getElementById('submit').addEventListener('click', function () {
 
         try {
+            let parser = editor.getValue();
             chrome.storage.sync.set(editor.getValue())
             document.getElementById('submit').className = 'btn btn-success';
             document.getElementById('submit').innerText = 'Saving...';
         } catch (e) {
-            console.error(e)
             document.getElementById('submit').className = 'btn btn-error';
             document.getElementById('submit').innerText = 'Error: Saving.';
         }
@@ -401,6 +497,7 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'quick_
         setTimeout(() => {
             document.getElementById('submit').innerText = 'Save Settings';
             document.getElementById('submit').className = 'btn btn-secondary';
+            location.reload();
         }, 1000);
     });
 

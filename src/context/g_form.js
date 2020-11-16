@@ -29,12 +29,11 @@ async function ObjectByString(o, s) {
         }
 
         if (k === "prompt()") {
-            k = prompt("input value")
+            k = prompt("Provide your input:")
         }
 
         if (k in o) {
             o = o[k];
-            console.log(k, o)
         } else {
             return;
         }
@@ -43,7 +42,7 @@ async function ObjectByString(o, s) {
 }
 
 function executeActionValue(runner_action, value) {
-    if (window.g_form.isDisabled(runner_action.key)) {
+    if (window.g_form.isDisabled(runner_action.key) && runner_action.key !== "bSNOW_gsft_main") {
         return;
     }
 
@@ -134,7 +133,15 @@ function executeActionValue(runner_action, value) {
             if (runner_action.exe === "=+" || runner_action.exe === "=-") {
                 currentDate = new Date()
             } else if (runner_action.exe === "+=" || runner_action.exe === "=-") {
-                currentDate = new Date(window.g_form.getValue(runner_action.key))
+                let strdate = window.g_form.getValue(runner_action.key)
+                let luldate = strdate.split(" ")
+                let plaindate = luldate[0].split(".")
+                if (window.g_form.getGlideUIElement(runner_action.key).type === "glide_date_time") {
+                    let xdate = luldate[1].split(":")
+                    currentDate = new Date(plaindate[2], plaindate[1] - 1, plaindate[0], xdate[0], xdate[1] - 1, xdate[2])
+                } else {
+                    currentDate = new Date(plaindate[2], plaindate[1] - 1, plaindate[0])
+                }
             }
 
             if (dateParser && currentDate) {
@@ -173,12 +180,24 @@ function executeActionValue(runner_action, value) {
                 }
 
                 let valDate = `${("0" + currentDate.getDate()).slice(-2)}.${("0" + (currentDate.getMonth() + 1)).slice(-2)}.${currentDate.getFullYear()}`
-                window.g_form.setValue(runner_action.key, "")
-                window.g_form.setValue(runner_action.key, valDate)
+                if (window.g_form.getGlideUIElement(runner_action.key).type === "glide_date_time") {
+                    valDate += ` ${("0" + currentDate.getHours()).slice(-2)}:${("0" + (currentDate.getMinutes() + 1)).slice(-2)}:${currentDate.getSeconds()}`
+                    window.g_form.setValue(runner_action.key, "")
+                    window.g_form.setValue(runner_action.key, valDate)
+                } else {
+                    window.g_form.setValue(runner_action.key, "")
+                    window.g_form.setValue(runner_action.key, valDate)
+                }
             }
             break;
         case "val":
             if (runner_action.exe === "==") {
+                if (runner_action.key === "bSNOW_gsft_main") {
+                    if (runner_action.value === "insert_and_stay") {
+                        window.gsftSubmit(window.gel('sysverb_insert_and_stay'))
+                    }
+                    break;
+                }
                 window.g_form.setValue(runner_action.key, "")
                 window.g_form.setValue(runner_action.key, value)
                 break;
@@ -202,11 +221,116 @@ function executeActionValue(runner_action, value) {
     }
 }
 
+async function retrievableActionValue(runner_action) {
+
+    let turbulenceValue;
+
+    if (runner_action.if_field_id) {
+        turbulenceValue = await parseThroughReg("$" + runner_action.if_field_id + "$")
+    }
+
+    switch (runner_action.type) {
+        default:
+            if (turbulenceValue === runner_action.if_field_value) {
+                return true;
+            }
+            break;
+    }
+
+    return false;
+}
+
+async function parseThroughReg(turbulenceValue) {
+
+    let advanced_settings = bSNOW_global_settings.advanced_settings;
+
+    let turboMatches = turbulenceValue.match(/\$.*?\$/g)
+
+    if (turboMatches) {
+
+        let g_formDataCache = window.NOW ? {
+            NOW: {
+                user: window.NOW.user
+            }
+        } : {}
+
+        for (let j = 0; j < turboMatches.length; j++) {
+            let savedTurboMatch = turboMatches[j];
+            turboMatches[j] = turboMatches[j].substring(1, turboMatches[j].length - 1);
+            let mainValue = turboMatches[j]
+            if (turboMatches[j].includes(".")) {
+                mainValue = turboMatches[j].split(".")[0]
+            }
+            if (!g_formDataCache[mainValue]) {
+
+                let c = document.querySelectorAll("#activity_field_filter_popover input")
+                let add_param = advanced_settings ? advanced_settings.custom_history_line_query : "";
+                if (!add_param) {
+                    for (i = 0; i < c.length; i++) {
+                        let yo = window.angular.element(c[i]).scope().field
+                        if (yo && yo.isActive) {
+                            if (add_param) {
+                                add_param += ("^ORlabel=" + yo.label)
+                            } else {
+                                add_param = "^label=" + yo.label
+                            }
+                        }
+                    }
+                }
+
+                try {
+                    let x_main = await g_xmlGetter(`${location.origin}/api/now/v1/table/${window.g_form.tableName}/${window.g_form.getUniqueValue()}`)
+                    if (x_main.status === 404) {
+                        throw new Error("Not Found")
+                    }
+                    let x_main_json = await x_main.json()
+                    if (x_main_json && x_main_json.result) {
+                        x_main_json.result.sys_history_line = {
+                            link: `${location.origin}/api/now/v1/table/sys_history_line?sysparm_query=set.id=${window.g_form.getUniqueValue()+ add_param}^ORDERBYDESCupdate_time`,
+                            value: `${window.g_form.getUniqueValue()}`
+                        }
+                        g_formDataCache = { ...x_main_json.result, ...g_formDataCache }
+                    }
+                } catch (e) {
+                    let g_formElement = window.g_form.elements.find(element => element.fieldName === mainValue)
+                    if (!g_formElement) {
+                        continue;
+                    }
+                    switch (g_formElement.type) {
+                        case "reference":
+                            let reffrerer = window.g_form.getGlideUIElement(g_formElement.fieldName).reference
+                            let x_main_sub = await g_xmlGetter(`${location.origin}/api/now/v1/table/${reffrerer}/${window.g_form.getValue(g_formElement.fieldName)}`)
+                            let x_main_json_sub = await x_main_sub.json()
+                            if (x_main_json_sub && x_main_json_sub.result) {
+                                x_main_json_sub.result.sys_history_line = {
+                                    link: `${location.origin}/api/now/v1/table/sys_history_line?sysparm_query=set.id=${window.g_form.getUniqueValue() + add_param}^ORDERBYDESCupdate_time`,
+                                    value: `${window.g_form.getUniqueValue()}`
+                                }
+                                g_formDataCache[g_formElement.fieldName] = { ...x_main_json_sub.result }
+                            } else {
+                                g_formDataCache[g_formElement.fieldName] = window.g_form.getValue(g_formElement.fieldName)
+                            }
+                            break;
+                        default:
+                            g_formDataCache[g_formElement.fieldName] = window.g_form.getValue(g_formElement.fieldName)
+                            break;
+                    }
+                }
+            }
+
+            let fsLogix = await ObjectByString(g_formDataCache, turboMatches[j])
+            if (fsLogix !== undefined && fsLogix !== null) {
+                turbulenceValue = turbulenceValue.replace(savedTurboMatch, fsLogix)
+            }
+        }
+    }
+    return turbulenceValue
+}
+
 async function handleCommand(whereTask, valueTask, element_id=null) {
     let specifications = bSNOW_global_settings.quick_adds;
     let specification_buttons = bSNOW_global_settings.quick_add_buttons;
     let special_actions = bSNOW_global_settings.actions;
-    let advanced_settings = bSNOW_global_settings.advanced_settings;
 
     let parameters = valueTask.match(new RegExp(/\(.*\)/g, "g"))
     let replacementParameter = ""
@@ -250,109 +374,44 @@ async function handleCommand(whereTask, valueTask, element_id=null) {
     for (let i = 0; i < turbulenceElement.keys.length; i++) {
         if (valueTask === turbulenceElement.keys[i].key) {
             let runner_actions;
+            let z_runner_actions;
             for (let j = 0; j < special_actions.length; j++) {
                 if (special_actions[j].action_id === turbulenceElement.keys[i].value) {
-                    runner_actions = special_actions[j].keys;
+                    z_runner_actions = special_actions[j].action_application
+                    runner_actions = z_runner_actions.keys;
                     break;
                 }
             }
-            if (!runner_actions) {
+            if (!z_runner_actions || !runner_actions) {
                 continue;
             }
-            for (let ki = 0; ki < runner_actions.length; ki++) {
-                let turbulenceValue;
-                turbulenceValue = runner_actions[ki].value.replace(
-                    new RegExp('<default>', "g"),
-                    replacementParameter
-                )
-                let turboMatches = turbulenceValue.match(/\$.*?\$/g)
 
-                if (turboMatches) {
-                    let g_formDataCache = window.NOW ? {
-                        NOW: {
-                            user: window.NOW.user
-                        }
-                    } : {}
+            for (let jell = 0; jell < z_runner_actions.conditional_for_type.for_executions; jell++) {
+                let continueable = true;
+                for (let k = 0; k < z_runner_actions.conditional_if_type.length; k++) {
+                    continueable = await retrievableActionValue(z_runner_actions.conditional_if_type[k])
+                }
+                if (!continueable) {
+                    break;
+                }
+                for (let ki = 0; ki < runner_actions.length; ki++) {
+                    let turbulenceValue;
+                    turbulenceValue = runner_actions[ki].value.replace(
+                        new RegExp('<default>', "g"),
+                        replacementParameter
+                    )
 
-                    for (let j = 0; j < turboMatches.length; j++) {
-                        let savedTurboMatch = turboMatches[j];
-                        turboMatches[j] = turboMatches[j].substring(1, turboMatches[j].length - 1);
-                        let mainValue = turboMatches[j]
-                        if (turboMatches[j].includes(".")) {
-                            mainValue = turboMatches[j].split(".")[0]
-                        }
-                        if (!g_formDataCache[mainValue]) {
+                    turbulenceValue = await parseThroughReg(turbulenceValue)
 
-                            let c = document.querySelectorAll("#activity_field_filter_popover input")
-                            let add_param = advanced_settings ? advanced_settings.custom_history_line_query : "";
-                            if (!add_param) {
-                                for (i = 0; i < c.length; i++) {
-                                    let yo = window.angular.element(c[i]).scope().field
-                                    if (yo && yo.isActive) {
-                                        if (add_param) {
-                                            add_param += ("^ORlabel=" + yo.label)
-                                        } else {
-                                            add_param = "^label=" + yo.label
-                                        }
-                                    }
-                                }
-                            }
-
-
-                            try {
-                                let x_main = await g_xmlGetter(`${location.origin}/api/now/v1/table/${window.g_form.tableName}/${window.g_form.getUniqueValue()}`)
-                                if (x_main.status === 404) {
-                                    throw new Error("Not Found")
-                                }
-                                let x_main_json = await x_main.json()
-                                if (x_main_json && x_main_json.result) {
-                                    x_main_json.result.sys_history_line = {
-                                        link: `${location.origin}/api/now/v1/table/sys_history_line?sysparm_query=set.id=${window.g_form.getUniqueValue()+ add_param}^ORDERBYDESCupdate_time`,
-                                        value: `${window.g_form.getUniqueValue()}`
-                                    }
-                                    g_formDataCache = { ...x_main_json.result, ...g_formDataCache }
-                                }
-                            } catch (e) {
-                                let g_formElement = window.g_form.elements.find(element => element.fieldName === mainValue)
-                                if (!g_formElement) {
-                                    continue;
-                                }
-                                switch (g_formElement.type) {
-                                    case "reference":
-                                        let reffrerer = window.g_form.getGlideUIElement(g_formElement.fieldName).reference
-                                        let x_main_sub = await g_xmlGetter(`${location.origin}/api/now/v1/table/${reffrerer}/${window.g_form.getValue(g_formElement.fieldName)}`)
-                                        let x_main_json_sub = await x_main_sub.json()
-                                        if (x_main_json_sub && x_main_json_sub.result) {
-                                            x_main_json_sub.result.sys_history_line = {
-                                                link: `${location.origin}/api/now/v1/table/sys_history_line?sysparm_query=set.id=${window.g_form.getUniqueValue() + add_param}^ORDERBYDESCupdate_time`,
-                                                value: `${window.g_form.getUniqueValue()}`
-                                            }
-                                            g_formDataCache[g_formElement.fieldName] = { ...x_main_json_sub.result }
-                                        } else {
-                                            g_formDataCache[g_formElement.fieldName] = window.g_form.getValue(g_formElement.fieldName)
-                                        }
-                                        break;
-                                    default:
-                                        g_formDataCache[g_formElement.fieldName] = window.g_form.getValue(g_formElement.fieldName)
-                                        break;
-                                }
-                            }
-                        }
-
-                        let fsLogix = await ObjectByString(g_formDataCache, turboMatches[j])
-                        if (fsLogix) {
-                            turbulenceValue = turbulenceValue.replace(savedTurboMatch, fsLogix)
-                        }
+                    if (element_id && element_id.endsWith(runner_actions[ki].key)) {
+                        turbulenceValueMain = turbulenceValue;
+                        turbulenceElement.id = element_id;
+                    } else {
+                        executeActionValue(runner_actions[ki], turbulenceValue)
                     }
                 }
-
-                if (element_id && element_id.endsWith(runner_actions[ki].key)) {
-                    turbulenceValueMain = turbulenceValue;
-                    turbulenceElement.id = element_id;
-                } else {
-                    executeActionValue(runner_actions[ki], turbulenceValue)
-                }
             }
+
             break;
         }
     }
