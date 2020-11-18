@@ -42,7 +42,7 @@ async function ObjectByString(o, s) {
 }
 
 function executeActionValue(runner_action, value) {
-    if (window.g_form.isDisabled(runner_action.key) && runner_action.key !== "bSNOW_gsft_main") {
+    if (window.g_form.isDisabled(runner_action.key) && runner_action.key !== "bSNOW_gsft_main" && runner_action.key !== "bSNOW_activity_watch") {
         return;
     }
 
@@ -197,6 +197,18 @@ function executeActionValue(runner_action, value) {
                         window.gsftSubmit(window.gel('sysverb_insert_and_stay'))
                     }
                     break;
+                } else if (runner_action.key === "bSNOW_activity_watch") {
+                    chrome.runtime.sendMessage("gkhldjllghhbeikhmpmgnmdghdhfddin", {
+                            content: {
+                                id: window.g_form.getUniqueValue(),
+                            },
+                            type: runner_action.key,
+                            handle: runner_action.value,
+                            base_link: bSNOW_global_settings.activity_watcher.activity_watcher_api
+                        },
+                        function (response) {
+                            console.log(response);
+                        });
                 }
                 window.g_form.setValue(runner_action.key, "")
                 window.g_form.setValue(runner_action.key, value)
@@ -650,6 +662,8 @@ if (this.g_form) {
             }
         }
     }
-    
+
+    console.log(chrome.runtime)
+
     new u_g_form()
 }
