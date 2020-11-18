@@ -25,6 +25,12 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
         }
     }
 
+    if (!contentConfig.activity_watcher) {
+        contentConfig.activity_watcher = {
+            activity_watcher_api: "http://localhost:5600/api/0/buckets/[your_bucket_id]/"
+        }
+    }
+
     if (!contentConfig._executions) {
         contentConfig._executions = ["==", "+=", "=+", "=-", "-="]
     }
@@ -542,6 +548,28 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
                             options: {
                                 input_height: '40px'
                             }
+                        }
+                    }
+                },
+                activity_watcher: {
+                    type: "object",
+                    title: "Activity Watcher",
+                    format: "categories",
+                    properties: {
+                        custom_history_line_query: {
+                            title: "Custom History Line Query",
+                            type: "string",
+                            options: {
+                                input_height: '40px'
+                            }
+                        },
+                        activity_watcher_api: {
+                            title: "Activity Watcher Bucket Api",
+                            type: "string",
+                            options: {
+                                input_height: '40px'
+                            },
+                            default: "http://localhost:5600/api/0/buckets/[your_bucket_id]/"
                         },
                     }
                 }

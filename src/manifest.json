@@ -8,7 +8,9 @@
 		"storage",
 		"unlimitedStorage",
 		"activeTab",
-		"tabs"
+		"tabs",
+		"http://localhost:5600/",
+		"https://localhost:5600/"
 	],
 	"content_scripts": [
 		{
@@ -39,5 +41,11 @@
 		"context/g_link.js",
 		"context/handlers/commandHandler.js"
 	],
+	"externally_connectable": {
+		"matches": [
+			"https://*.service-now.com/*",
+			"http://*.service-now.com/*"
+		]
+	},
 	"content_security_policy": "script-src 'self' https://cdn.jsdelivr.net; object-src 'self'"
 }
