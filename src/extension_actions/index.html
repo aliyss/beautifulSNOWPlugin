@@ -14,11 +14,22 @@
     <meta name = "viewport" content = "width=device-width, initial-scale = 1.0">
     <meta http-equiv = "X-UA-Compatible" content = "ie=edge">
     <title>beautifulSNOW Chrome Extension</title>
-    <!--link href = "style.css" rel = "stylesheet" type = "text/css"-->
-    <script src="js/pager.js"></script>
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="icon" type="image/png" href="../assets/logo.png"/>
+    <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.js"></script>
 </head>
 <body>
-
-<!--script src = "scripts.js"></script-->
+<div id="navbar">
+    <label for="search_bar">Search Values: </label><input id="search_bar"/>
+</div>
+<main>
+    <div id='editor_holder'></div>
+    <script src="js/jsonEditor.js"></script>
+    <script>
+        function filterValues(input) {
+            console.log(input)
+        }
+    </script>
+</main>
 </body>
 </html>

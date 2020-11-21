@@ -41,6 +41,9 @@ function waitForElement(selector) {
             scriptHeader.id = "global_beautiful_snow"
 
             chrome.storage.sync.get(['global_replacements', 'quick_adds', 'quick_add_buttons', 'actions', 'auto_runs', 'advanced_settings', 'activity_watcher'], function (result) {
+                result.runtime = {
+                    id: chrome.runtime.id,
+                }
                 scriptHeader.textContent += 'var bSNOW_global_settings = ' + JSON.stringify(result) + ';\n';
             });
 
@@ -48,11 +51,6 @@ function waitForElement(selector) {
             document.head.appendChild(scriptGLink);
             document.body.appendChild(scriptGForm);
 
-            chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-                console.log(document.querySelectorAll('#gsft_main')[0] ? document.querySelectorAll('#gsft_main')[0].contentWindow.document.g_form : 'null')
-                if (request.method === "getVars")
-                    sendResponse({bSnow: bSNOW_global_settings})
-            });
         }
 
     })

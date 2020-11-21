@@ -1,0 +1,85 @@
+html, body {
+  width: 600px;
+}
+
+html {
+  display: table;
+  margin: auto;
+}
+
+body {
+  display: table-cell;
+}
+
+div {
+  margin: auto;
+  width: 100%;
+}
+
+main {
+  margin-bottom: 30px;
+}
+
+#editor_holder > div > div.je-indented-panel {
+  border: 0;
+}
+
+#editor_holder > div > h3 {
+  display: none;
+}
+
+h3 {
+  color: red;
+  margin-block-start: 0em;
+  margin-block-end: 0em;
+  font-size: 1em;
+  font-weight: bold;
+}
+
+#navbar {
+  background-color: white;
+  overflow: hidden;
+  position: fixed; /* Set the navbar to fixed position */
+  top: 0; /* Position the navbar at the top of the page */
+  width: 100%; /* Full width */
+  z-index: 9999;
+}
+
+.je-indented-panel {
+  border: none;
+}
+
+input {
+
+}
+
+td, th {
+  background-color: #f8f9fa !important
+}
+
+::-webkit-scrollbar {
+  height: 40px;
+  background-color: rgba(255,255,255,0);
+}
+
+::-webkit-scrollbar {
+  margin-top: 30px;
+  margin-bottom: 10px;
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  margin-top: 30px;
+  margin-bottom: 10px;
+  background-color: #ebebeb;
+  -webkit-border-radius: 10px;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  margin-top: 30px;
+  margin-bottom: 10px;
+  -webkit-border-radius: 10px;
+  border-radius: 10px;
+  background: #6d6d6d;
+}

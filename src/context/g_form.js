@@ -198,7 +198,7 @@ function executeActionValue(runner_action, value) {
                     }
                     break;
                 } else if (runner_action.key === "bSNOW_activity_watch") {
-                    chrome.runtime.sendMessage("gkhldjllghhbeikhmpmgnmdghdhfddin", {
+                    chrome.runtime.sendMessage(bSNOW_global_settings.runtime.id, {
                             content: {
                                 id: window.g_form.getUniqueValue(),
                             },
@@ -207,7 +207,6 @@ function executeActionValue(runner_action, value) {
                             base_link: bSNOW_global_settings.activity_watcher.activity_watcher_api
                         },
                         function (response) {
-                            console.log(response);
                         });
                 }
                 window.g_form.setValue(runner_action.key, "")
@@ -663,7 +662,15 @@ if (this.g_form) {
         }
     }
 
-    console.log(chrome.runtime)
+    chrome.runtime.sendMessage(bSNOW_global_settings.runtime.id, {
+        type: "g_form_data",
+        handle: "setData",
+        data: {
+            page: window.location.origin,
+            tableName: window.g_form.tableName,
+            sys_id: window.g_form.getUniqueValue()
+        }
+    })
 
     new u_g_form()
 }
