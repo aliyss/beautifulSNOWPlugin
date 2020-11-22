@@ -38,9 +38,12 @@ async function insertJSON(website, id="editor_holder") {
         let editor = new JSONEditor(document.getElementById(id), {
             schema: {
                 type: "object",
-                title: "->",
+                title: " ",
                 options: {
-                    disable_collapse: false
+                    disable_collapse: false,
+                    inputAttributes: {
+                        class: "hidden"
+                    }
                 },
                 properties: {
                     ...schema
@@ -74,10 +77,9 @@ async function insertJSON(website, id="editor_holder") {
 
 function listenSearch() {
     let search_bar = document.getElementById("search_bar")
+    let aTags = document.getElementsByClassName("row");
     if (search_bar.value !== "" && search_bar.value !== null) {
-        let aTags = document.getElementsByClassName("row");
         let searchText = search_bar.value.toLowerCase();
-
         for (let i = 0; i < aTags.length; i++) {
             let xTags = aTags[i].getElementsByTagName("label");
             let lTags = aTags[i].getElementsByTagName("input");
@@ -99,8 +101,6 @@ function listenSearch() {
             }
         }
     } else {
-        let aTags = document.getElementsByClassName("row");
-
         for (let i = 0; i < aTags.length; i++) {
             aTags[i].style.display = "";
         }
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function () {
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
         chrome.runtime.sendMessage({
             type: "g_form_data",
-            handle: "getData",
+            handle: "get",
             data: {
                 id: tabs[0].id
             }

@@ -1,37 +1,80 @@
-let tabData = {
-    g_form_data: {}
+function g_xmlGetter(path) {
+    return new Promise((resolve, reject) => {
+        fetch(path, {
+            method: 'GET',
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            }
+        }).then(r => resolve(r))
+    })
 }
 
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    if (request.type === "g_form_data") {
-        if (request.handle === "getData") {
-            sendResponse(tabData.g_form_data[request.data.id])
+const tabData = {
+    gForm_data: {}
+}
+
+const tabHandlers = {
+    async gForm_data_handler(request, sender) {
+        switch (request.handle) {
+            case "set":
+                tabData.gForm_data[sender.tab.id] = request.data
+                break;
+            case "get":
+                return tabData.gForm_data[request.data.id];
         }
     }
-})
+}
 
-chrome.runtime.onMessageExternal.addListener(
-    function (request, sender, sendResponse) {
-        if (request.type === "g_form_data") {
-            if (request.handle === "setData") {
-                tabData.g_form_data[sender.tab.id] = request.data
-            }
-        } else if (request.type === "bSNOW_activity_watch") {
-            if (request.handle === "start") {
-                l_arr[request.content.id] = {
+const pluginData = {
+    activityWatch_data: {}
+}
+
+const pluginHandlers = {
+    async activityWatch_data_handler(request, sender) {
+        let now_date = new Date()
+        switch (request.handle) {
+            case "start":
+                pluginData.activityWatch_data[request.content.id] = {
                     base_link: request.base_link,
-                    start: new Date().toJSON().split(".")[0],
+                    start: new Date(now_date).toJSON().split(".")[0],
                     end: null,
                     values: []
                 }
-                console.log(l_arr)
-            } else if (request.handle === "end") {
-                l_arr[request.content.id].end = new Date().toJSON().split(".")[0];
-                console.log(l_arr[request.content.id])
-                l_arr[request.content.id].values = (g_xmlGetter(l_arr[request.content.id].base_link + `events?start=${l_arr[request.content.id].start}&end=${l_arr[request.content.id].end}`)).json()
-                console.log(l_arr)
-            } else if (request.handle === "get") {
-                console.log(l_arr[request.content.id].values)
-            }
+                break;
+            case "end":
+                pluginData.activityWatch_data[request.content.id].end = new Date(now_date).toJSON().split(".")[0];
+                let path = `${pluginData.activityWatch_data[request.content.id].base_link}events?start=${pluginData.activityWatch_data[request.content.id].start}&end=${pluginData.activityWatch_data[request.content.id].end}`
+                pluginData.activityWatch_data[request.content.id].values = await (await g_xmlGetter(path)).json()
+                break;
+            case "get":
+                return pluginData.activityWatch_data[request.content.id];
+            case "delete":
+                delete pluginData.activityWatch_data[request.content.id]
+                break;
         }
-    });
+    }
+}
+
+async function requestHandler(request, sender, sendResponse) {
+    let returnValue;
+
+    switch (request.type) {
+        case "g_form_data":
+            returnValue = await tabHandlers.gForm_data_handler(request, sender)
+            break;
+        case "bSNOW_activity_watch":
+            returnValue = await pluginHandlers.activityWatch_data_handler(request, sender)
+            break;
+    }
+
+    if (returnValue) {
+        sendResponse(returnValue)
+    }
+}
+
+chrome.runtime.onMessage.addListener(requestHandler)
+
+chrome.runtime.onMessageExternal.addListener(requestHandler);
+

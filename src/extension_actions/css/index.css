@@ -1,5 +1,6 @@
 html, body {
-  width: 600px;
+  width: 700px;
+  height: 600px;
 }
 
 html {
@@ -17,7 +18,7 @@ div {
 }
 
 main {
-  margin-bottom: 30px;
+  margin-bottom: 90px;
 }
 
 #editor_holder > div > div.je-indented-panel {
@@ -29,28 +30,36 @@ main {
 }
 
 h3 {
-  color: red;
+  color: #278efc;
   margin-block-start: 0em;
   margin-block-end: 0em;
   font-size: 1em;
   font-weight: bold;
 }
 
-#navbar {
+#searchbar {
   background-color: white;
   overflow: hidden;
   position: fixed; /* Set the navbar to fixed position */
-  top: 0; /* Position the navbar at the top of the page */
+  bottom: 0; /* Position the navbar at the top of the page */
   width: 100%; /* Full width */
   z-index: 9999;
+  padding-left: 10px;
+  padding-bottom: 10px;
+  border: #278efc;
+  border-top-width: thick;
 }
 
-.je-indented-panel {
-  border: none;
-}
-
-input {
-
+div[data-theme="html"] .je-indented-panel {
+  max-width: 90%;
+  font-family: system-ui, sans-serif;
+  width: 90%;
+  padding: 5px;
+  margin: 10px;
+  border-radius: 3px;
+  border: none !important;
+  border-left: 1px solid rgb(221, 221, 221) !important;
+  border-top: 1px solid rgb(221, 221, 221) !important;
 }
 
 td, th {
@@ -58,19 +67,19 @@ td, th {
 }
 
 ::-webkit-scrollbar {
-  height: 40px;
+  height: 10px;
   background-color: rgba(255,255,255,0);
 }
 
 ::-webkit-scrollbar {
   margin-top: 30px;
-  margin-bottom: 10px;
+  margin-bottom: 60px;
   width: 10px;
 }
 
 ::-webkit-scrollbar-track {
   margin-top: 30px;
-  margin-bottom: 10px;
+  margin-bottom: 60px;
   background-color: #ebebeb;
   -webkit-border-radius: 10px;
   border-radius: 10px;
@@ -78,7 +87,7 @@ td, th {
 
 ::-webkit-scrollbar-thumb {
   margin-top: 30px;
-  margin-bottom: 10px;
+  margin-bottom: 60px;
   -webkit-border-radius: 10px;
   border-radius: 10px;
   background: #6d6d6d;

@@ -18,20 +18,24 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css">
+    <link rel="stylesheet" href="css/servicenow_extracted.css">
 </head>
 <body>
-<main>
-    <h1>💖 Welcome to beautifulSnow! 💖</h1>
-    <p>To open SNOW click the button below. Otherwise check out the Guide.</p>
-    <h3 style="margin-top: 50px" id="SNOW">🌐 SNOW</h3>
-    <div class="card card-body mb-3 bg-light">
-        <div class="card-body">
-            <button id='submit' class="btn btn-secondary">Save Settings</button>
-            <button id='import' class="btn btn-secondary">Import Settings</button>
-            <button id='export' class="btn btn-secondary">Export Settings</button>
-        </div>
+<nav>
+    <div id="title">
+        <a>
+            <h2>💖 Welcome to beautifulSnow! 💖</h2>
+        </a>
     </div>
-    <div id='editor_holder' data-theme="bootstrap4" style="width: 100%; margin-top: 50px"></div>
+    <div style="float: right">
+        <button id='submit'>Save Settings</button>
+        <button id='import'>Import Settings</button>
+        <button id='export'>Export Settings</button>
+    </div>
+</nav>
+<div class="list_nav_top list_nav list_nav_spacer" style="display: block; margin-top: 36px;"></div>
+<main>
+    <div id='editor_holder' data-theme="bootstrap4" style="width: 100%"></div>
     <script src="js/jsonEditor.js"></script>
 </main>
 </body>

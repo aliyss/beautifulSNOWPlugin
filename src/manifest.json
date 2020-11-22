@@ -6,8 +6,6 @@
 	"author": "Aliyss Snow",
 	"permissions": [
 		"storage",
-		"unlimitedStorage",
-		"activeTab",
 		"tabs",
 		"http://localhost:5600/",
 		"https://localhost:5600/"
@@ -33,13 +31,19 @@
 	"browser_action": {
 		"default_icon": "./assets/logo.png",
 		"default_popup": "./extension_actions/index.html",
-		"default_title": "A tooltip popup description when you hover over the Chrome Extension icon."
+		"default_title": "beautifulSNOW"
 	},
 	"options_page": "./extension_options/index.html",
 	"web_accessible_resources": [
-		"context/g_form.js",
-		"context/g_link.js",
-		"context/handlers/commandHandler.js"
+		"extension_contents/js/g_form.js",
+		"extension_contents/js/g_link.js",
+		"extension_contents/js/g_admin.js",
+		"extension_contents/js/g_parent.js",
+		"extension_contents/css/g_parent.css",
+		"extension_options/index.html",
+		"extension_contents/js/handlers/commandHandler.js",
+		"https://*.service-now.com/*",
+		"http://*.service-now.com/*"
 	],
 	"externally_connectable": {
 		"matches": [
