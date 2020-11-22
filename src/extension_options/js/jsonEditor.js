@@ -795,3 +795,11 @@ document.getElementById('import').addEventListener('click', async function () {
     }, 1000);
 
 });
+
+document.getElementById("goBack").addEventListener('click', function () {
+    for (let i = 0; i < window.history.length; i++) {
+        console.log(window.history)
+    }
+    window.history.go(-2);
+    return false;
+})

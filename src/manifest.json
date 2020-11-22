@@ -2,7 +2,7 @@
 	"name": "beautifulSNOWPlugin",
 	"description" : "beautifulSnowClient as a Plugin instead of a full desktop Application.",
 	"manifest_version": 2,
-	"version": "1.024",
+	"version": "0.0.0.2",
 	"author": "Aliyss Snow",
 	"permissions": [
 		"storage",
@@ -46,9 +46,7 @@
 		"extension_contents/js/g_parent.js",
 		"extension_contents/css/g_parent.css",
 		"extension_options/index.html",
-		"extension_contents/js/handlers/commandHandler.js",
-		"https://*.service-now.com/*",
-		"http://*.service-now.com/*"
+		"extension_contents/js/handlers/commandHandler.js"
 	],
 	"externally_connectable": {
 		"matches": [

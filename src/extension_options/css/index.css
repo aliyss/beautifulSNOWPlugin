@@ -25,6 +25,12 @@ main {
   margin: auto;
 }
 
+.icon {
+  width: 15px;
+  height: 15px;
+  display: inline-block;
+}
+
 td, th {
   background-color: #f8f9fa !important
 }
