@@ -15,21 +15,20 @@
     <meta http-equiv = "X-UA-Compatible" content = "ie=edge">
     <title>beautifulSNOW Chrome Extension</title>
     <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/servicenow_extracted.css">
     <link rel="icon" type="image/png" href="../assets/logo.png"/>
     <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.js"></script>
 </head>
 <body>
-<div id="navbar">
-    <label for="search_bar">Search Values: </label><input id="search_bar"/>
-</div>
+<nav>
+
+</nav>
 <main>
     <div id='editor_holder'></div>
     <script src="js/jsonEditor.js"></script>
-    <script>
-        function filterValues(input) {
-            console.log(input)
-        }
-    </script>
+    <div id="searchbar">
+        <label for="search_bar">Search Values: </label><input id="search_bar"/>
+    </div>
 </main>
 </body>
 </html>

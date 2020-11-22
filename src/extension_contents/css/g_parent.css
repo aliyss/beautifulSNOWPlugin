@@ -1,0 +1,43 @@
+#beautifulSNOW_Configuration_Button {
+    -webkit-tap-highlight-color: transparent;
+    list-style: none;
+    box-sizing: border-box;
+    color: inherit;
+    font: inherit;
+    overflow: visible;
+    text-transform: none;
+    font-weight: normal;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    background-image: none;
+    white-space: nowrap;
+    border-radius: 3px;
+    user-select: none;
+    background-color: transparent;
+    border: 1px solid transparent;
+    margin: 0 0 0 4px;
+    padding: 2px 4px;
+    font-size: 18px;
+    display: inline-block;
+    line-height: .9;
+    height: 31px;
+    width: 31px;
+}
+
+#beautifulSNOW_Configuration_Button:hover {
+    white-space: nowrap;
+    border-radius: 3px;
+    user-select: none;
+    border: 1px solid transparent;
+    margin: 0 0 0 4px;
+    text-decoration: none;
+    padding: 2px 4px;
+    font-size: 18px;
+    display: inline-block;
+    line-height: .9;
+    height: 31px;
+    width: 31px;
+    background: rgba(0, 0, 0, 0.2);
+    color: #278efc;
+}

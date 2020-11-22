@@ -12,19 +12,101 @@ function g_xmlGetter(path) {
     })
 }
 
+function g_activity_watch_getter(replacementParameter) {
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(bSNOW_global_settings.runtime.id, {
+                content: {
+                    id: replacementParameter ? replacementParameter : window.g_form.getUniqueValue(),
+                },
+                type: "bSNOW_activity_watch",
+                handle: "get",
+                base_link: bSNOW_global_settings.activity_watcher.activity_watcher_api
+            },
+            function (response) {
+                let replacersApp = bSNOW_global_settings.activity_watcher.replacements_app
+                let replacersTitle = bSNOW_global_settings.activity_watcher.replacements_title
+                let ignorablesApp = bSNOW_global_settings.activity_watcher.ignore_app
+                let ignorablesTitle = bSNOW_global_settings.activity_watcher.ignore_title
+                let min_dur = bSNOW_global_settings.activity_watcher.minimum_duration
+                response.cleanedString = ""
+                response.grouped = {}
+                for (let i = 0; i < response.values.length; i++) {
+                    if (response.values[i].data && response.values[i].data.app && response.values[i].data.title) {
+                        response.values[i].data.title = response.values[i].data.title.trim();
+                        if (response.duration < min_dur) {
+                            continue;
+                        }
+                        let matched = false
+                        for (let j = 0; j < ignorablesApp.length; j++) {
+                            if (response.values[i].data.app.match(ignorablesApp[j].searchRegex)) {
+                                matched = true
+                                break;
+                            }
+                        }
+                        if (matched) {
+                            continue;
+                        }
+                        for (let j = 0; j < ignorablesTitle.length; j++) {
+                            if (response.values[i].data.title.match(ignorablesTitle[j].searchRegex)) {
+                                matched = true
+                                break;
+                            }
+                        }
+                        if (matched) {
+                            continue;
+                        }
+                        for (let j = 0; j < replacersApp.length; j++) {
+                            response.values[i].data.app = response.values[i].data.app.replace(new RegExp(replacersApp[j].searchRegex, "g"), replacersApp[j].replaceValue)
+                        }
+                        for (let j = 0; j < replacersTitle.length; j++) {
+                            response.values[i].data.title = response.values[i].data.title.replace(new RegExp(replacersTitle[j].searchRegex, "g"), replacersTitle[j].replaceValue)
+                        }
+                        if (!response.grouped[response.values[i].data.app]) {
+                            response.grouped[response.values[i].data.app] = []
+                        }
+                        function hasDuplicates(arr) {
+                            return arr.some( function(item) {
+                                return arr.indexOf(item) !== arr.lastIndexOf(item);
+                            });
+                        }
+                        response.grouped[response.values[i].data.app].push(response.values[i].data.title)
+                    }
+                }
+                for (const groupedKey in response.grouped) {
+                    response.cleanedString += "\n" + groupedKey;
+                    if (bSNOW_global_settings.activity_watcher.disable_duplicates) {
+                        response.grouped[groupedKey] = [...new Set(response.grouped[groupedKey])]
+                    }
+                    for (let i = 0; i < response.grouped[groupedKey].length; i++) {
+                        response.cleanedString += "\n" + "- " + response.grouped[groupedKey][i]
+                    }
+                }
+                resolve(response)
+            });
+    })
+}
+
 async function ObjectByString(o, s) {
     // Reference Code: https://stackoverflow.com/a/6491621
-    s = s.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
-    s = s.replace(/^\./, '');           // strip a leading dot
-    var a = s.split('.');
-    for (var i = 0, n = a.length; i < n; ++i) {
-        var k = a[i];
+    s = s.replace(/\[(\w+)\]/g, '.$1');
+    s = s.replace(/^\./, '');
+    let a = s.split('.');
+    for (let i = 0, n = a.length; i < n; ++i) {
+        let k = a[i];
 
         if (o[k] && o[k]["link"] && typeof o[k] !== "string") {
             let x_main = await g_xmlGetter(o[k]["link"])
             let x_main_json = await x_main.json()
             if (x_main_json && x_main_json.result) {
                 o[k] = {...x_main_json.result}
+            }
+        }
+
+        if (o[k.replace(/\(.*\)/g, "")] && k.replace(/\(.*\)/g, "") === "bSNOW_activity_watch" && o[k.replace(/\(.*\)/g, "")]["id"] !== undefined && typeof o[k.replace(/\(.*\)/g, "")] !== "string") {
+            k = k.replace(/\(.*\)/g, "")
+            let x_main = await g_activity_watch_getter(o[k]["id"])
+            if (x_main) {
+                o[k] = x_main
             }
         }
 
@@ -41,7 +123,7 @@ async function ObjectByString(o, s) {
     return o;
 }
 
-function executeActionValue(runner_action, value) {
+async function executeActionValue(runner_action, value, replacementParameter = null) {
     if (window.g_form.isDisabled(runner_action.key) && runner_action.key !== "bSNOW_gsft_main" && runner_action.key !== "bSNOW_activity_watch") {
         return;
     }
@@ -198,15 +280,25 @@ function executeActionValue(runner_action, value) {
                     }
                     break;
                 } else if (runner_action.key === "bSNOW_activity_watch") {
+                    let temp_runnerAction = runner_action.value;
+                    if (!replacementParameter) {
+                        let parameters = runner_action.value.match(new RegExp(/\(.*\)/g, "g"))
+                        replacementParameter = ""
+                        if (parameters) {
+                            replacementParameter = parameters[0].substring(1, parameters[0].length - 1)
+                            temp_runnerAction = runner_action.value.replace(/\(.*\)/g, "")
+                        }
+                    }
                     chrome.runtime.sendMessage(bSNOW_global_settings.runtime.id, {
                             content: {
-                                id: window.g_form.getUniqueValue(),
+                                id: replacementParameter ? await parseThroughReg(replacementParameter) : window.g_form.getUniqueValue(),
                             },
                             type: runner_action.key,
-                            handle: runner_action.value,
+                            handle: temp_runnerAction,
                             base_link: bSNOW_global_settings.activity_watcher.activity_watcher_api
                         },
                         function (response) {
+                            console.log(response)
                         });
                 }
                 window.g_form.setValue(runner_action.key, "")
@@ -299,6 +391,13 @@ async function parseThroughReg(turbulenceValue) {
 
     let advanced_settings = bSNOW_global_settings.advanced_settings;
 
+    let parameters = turbulenceValue.match(new RegExp(/\(.*\)/g, "g"))
+    let replacementParameter = ""
+    if (parameters) {
+        replacementParameter = parameters[0].substring(1, parameters[0].length - 1)
+        turbulenceValue = turbulenceValue.replace(/\(.*\)/g, "")
+    }
+
     let turboMatches = turbulenceValue.match(/\$.*?\$/g)
 
     if (turboMatches) {
@@ -306,6 +405,9 @@ async function parseThroughReg(turbulenceValue) {
         let g_formDataCache = window.NOW ? {
             NOW: {
                 user: window.NOW.user
+            },
+            bSNOW_activity_watch: {
+                id: await parseThroughReg(replacementParameter)
             }
         } : {}
 
@@ -375,7 +477,10 @@ async function parseThroughReg(turbulenceValue) {
 
             let fsLogix = await ObjectByString(g_formDataCache, turboMatches[j])
             if (fsLogix !== undefined && fsLogix !== null) {
-                turbulenceValue = turbulenceValue.replace(savedTurboMatch, fsLogix)
+                if (typeof fsLogix !== "string") {
+                    fsLogix = JSON.stringify(fsLogix)
+                }
+                turbulenceValue = turbulenceValue.replace(savedTurboMatch.replace(/\(.*\)/g, ""), fsLogix)
             }
         }
     }
@@ -475,7 +580,7 @@ async function handleCommand(whereTask, valueTask, element_id=null) {
                         turbulenceValueMain = turbulenceValue;
                         turbulenceElement.id = element_id;
                     } else {
-                        executeActionValue(runner_actions[ki], turbulenceValue)
+                        executeActionValue(runner_actions[ki], turbulenceValue, replacementParameter)
                     }
                 }
             }
@@ -636,7 +741,7 @@ function yoloAuto(task) {
     handleCommand(task, "*", "auto_runs")
 }
 
-if (this.g_form) {
+if (window.g_form) {
 
     if (bSNOW_global_settings && bSNOW_global_settings.quick_add_buttons) {
         let btns = bSNOW_global_settings.quick_add_buttons;
@@ -664,7 +769,7 @@ if (this.g_form) {
 
     chrome.runtime.sendMessage(bSNOW_global_settings.runtime.id, {
         type: "g_form_data",
-        handle: "setData",
+        handle: "set",
         data: {
             page: window.location.origin,
             tableName: window.g_form.tableName,

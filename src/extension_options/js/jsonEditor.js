@@ -1,6 +1,6 @@
 var editor;
 
-chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_runs', 'quick_add_buttons', 'advanced_settings'], function (result) {
+chrome.storage.local.get(['global_replacements', 'quick_adds', 'actions', 'auto_runs', 'quick_add_buttons', 'advanced_settings', 'activity_watcher'], function (result) {
     let contentConfig = result;
 
     if (!contentConfig.global_replacements) {
@@ -27,8 +27,22 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
 
     if (!contentConfig.activity_watcher) {
         contentConfig.activity_watcher = {
-            activity_watcher_api: "http://localhost:5600/api/0/buckets/[your_bucket_id]/"
         }
+    }
+
+    if (!contentConfig.activity_watcher.activity_watcher_api) {
+        contentConfig.activity_watcher = {
+            activity_watcher_api: "",
+            minimum_duration: 60,
+            replacements_app: [],
+            replacements_title: [],
+            ignore_app: [],
+            ignore_title: [],
+        }
+    }
+
+    if (!contentConfig.activity_watcher.disable_duplicates) {
+        contentConfig.activity_watcher.disable_duplicates = true
     }
 
     if (!contentConfig._executions) {
@@ -79,6 +93,9 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
                     }
                 },
                 global_replacements: {
+                    options: {
+                        disable_collapse: true
+                    },
                     type: "array",
                     format: "table",
                     title: "Replacements",
@@ -132,7 +149,8 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
                     title: "Actions",
                     uniqueItems: true,
                     options: {
-                        expanded: true
+                        expanded: true,
+                        disable_collapse: true
                     },
                     items: {
                         type: "object",
@@ -154,7 +172,6 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
                                 title: "Action Id",
                                 type: "string",
                                 options: {
-                                    input_width: "0vh",
                                     hidden: true
                                 }
                             },
@@ -185,11 +202,11 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
                                                     type: "string",
                                                     options: {
                                                         input_height: '40px',
-                                                        input_width: '200px'
+                                                        input_width: '300px'
                                                     }
                                                 },
                                                 type: {
-                                                    title: "Field Type",
+                                                    title: "Type",
                                                     type: "string",
                                                     options: {
                                                         input_height: '40px',
@@ -201,8 +218,7 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
                                                     title: "Execution",
                                                     type: "string",
                                                     options: {
-                                                        input_height: '40px',
-                                                        input_width: '100px',
+                                                        input_width: '100px'
                                                     },
                                                     watch: {
                                                         "__executions": "_executions",
@@ -219,7 +235,7 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
                                                     type: "string",
                                                     format: "xhtml",
                                                     options: {
-                                                        input_height: '40px',
+                                                        input_width: "100vh",
                                                         expanded: true
                                                     }
                                                 }
@@ -308,6 +324,9 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
                     format: "table",
                     title: "Quick Adds",
                     uniqueItems: true,
+                    options: {
+                        disable_collapse: true
+                    },
                     items: {
                         type: "object",
                         name: "Row",
@@ -383,6 +402,9 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
                     format: "table",
                     title: "Quick Add Buttons",
                     uniqueItems: true,
+                    options: {
+                        disable_collapse: true
+                    },
                     items: {
                         type: "object",
                         name: "Row",
@@ -459,6 +481,9 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
                     }
                 },
                 auto_runs: {
+                    options: {
+                        disable_collapse: true
+                    },
                     type: "array",
                     format: "table",
                     title: "AutoRuns",
@@ -539,6 +564,10 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
                     }
                 },
                 advanced_settings: {
+                    options: {
+                        disable_collapse: true
+                    },
+                    format: "categories",
                     type: "object",
                     title: "Advanced Settings",
                     properties: {
@@ -555,14 +584,10 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
                     type: "object",
                     title: "Activity Watcher",
                     format: "categories",
+                    options: {
+                        disable_collapse: true
+                    },
                     properties: {
-                        custom_history_line_query: {
-                            title: "Custom History Line Query",
-                            type: "string",
-                            options: {
-                                input_height: '40px'
-                            }
-                        },
                         activity_watcher_api: {
                             title: "Activity Watcher Bucket Api",
                             type: "string",
@@ -570,6 +595,122 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
                                 input_height: '40px'
                             },
                             default: "http://localhost:5600/api/0/buckets/[your_bucket_id]/"
+                        },
+                        minimum_duration: {
+                            title: "Minimum Duration (in sec)",
+                            type: "number",
+                            options: {
+                                input_height: '40px'
+                            },
+                            default: "60"
+                        },
+                        disable_duplicates: {
+                            title: "Disable Duplicates",
+                            type: "boolean",
+                            options: {
+                                input_height: '40px'
+                            },
+                            default: true
+                        },
+                        replacements_app: {
+                            type: "array",
+                            format: "table",
+                            title: "Replacements App",
+                            uniqueItems: true,
+                            options: {
+                                disable_collapse: true
+                            },
+                            items: {
+                                type: "object",
+                                name: "Row",
+                                properties: {
+                                    searchRegex: {
+                                        type: "string",
+                                        options: {
+                                            input_height: '40px',
+                                            input_width: '600px'
+                                        }
+                                    },
+                                    replaceValue: {
+                                        type: "string",
+                                        options: {
+                                            input_height: '40px'
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        replacements_title: {
+                            type: "array",
+                            format: "table",
+                            title: "Replacements Title",
+                            uniqueItems: true,
+                            options: {
+                                disable_collapse: true
+                            },
+                            items: {
+                                type: "object",
+                                name: "Row",
+                                properties: {
+                                    searchRegex: {
+                                        type: "string",
+                                        options: {
+                                            input_height: '40px',
+                                            input_width: '600px'
+                                        }
+                                    },
+                                    replaceValue: {
+                                        type: "string",
+                                        options: {
+                                            input_height: '40px'
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        ignore_app: {
+                            type: "array",
+                            format: "table",
+                            title: "Ignorable Apps",
+                            uniqueItems: true,
+                            options: {
+                                disable_collapse: true
+                            },
+                            items: {
+                                type: "object",
+                                name: "Row",
+                                properties: {
+                                    searchRegex: {
+                                        type: "string",
+                                        options: {
+                                            input_height: '40px',
+                                            input_width: '600px'
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        ignore_title: {
+                            type: "array",
+                            format: "table",
+                            title: "Ignorable Titles",
+                            uniqueItems: true,
+                            options: {
+                                disable_collapse: true
+                            },
+                            items: {
+                                type: "object",
+                                name: "Row",
+                                properties: {
+                                    searchRegex: {
+                                        type: "string",
+                                        options: {
+                                            input_height: '40px',
+                                            input_width: '600px'
+                                        }
+                                    }
+                                }
+                            }
                         },
                     }
                 }
@@ -580,7 +721,6 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
         prompt_before_delete: false,
         disable_edit_json: true,
         disable_properties: true,
-        disable_array_reorder: true,
         disable_array_delete_last_row: true,
         disable_array_delete_all_rows: true,
         object_layout: 'table',
@@ -604,18 +744,15 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
 
         try {
             let parser = editor.getValue();
-            chrome.storage.sync.set(parser)
-            document.getElementById('submit').className = 'btn btn-success';
+            chrome.storage.local.set(parser)
             document.getElementById('submit').innerText = 'Saving...';
         } catch (e) {
-            document.getElementById('submit').className = 'btn btn-error';
             document.getElementById('submit').innerText = 'Error: Saving.';
         }
 
 
         setTimeout(() => {
             document.getElementById('submit').innerText = 'Save Settings';
-            document.getElementById('submit').className = 'btn btn-secondary';
             location.reload();
         }, 1000);
     });
@@ -637,7 +774,6 @@ chrome.storage.sync.get(['global_replacements', 'quick_adds', 'actions', 'auto_r
 
 document.getElementById('import').addEventListener('click', async function () {
 
-    document.getElementById('import').className = 'btn btn-warning';
     document.getElementById('import').innerText = 'Importing...';
     // Get the value from the editor
     var [fileHandle] = await window.showOpenFilePicker();
@@ -645,21 +781,17 @@ document.getElementById('import').addEventListener('click', async function () {
     const contents = await file.text();
 
     try {
-        chrome.storage.sync.set(JSON.parse(contents), function () {
+        chrome.storage.local.set(JSON.parse(contents), function () {
             console.log("Files have been saved to SYNC")
         });
         location.reload();
     } catch (e) {
         console.error(e)
-        chrome.storage.local.set(JSON.parse(contents), function () {
-            console.log("Files have been saved to LOCAL")
-        });
         location.reload();
     }
 
     setTimeout(() => {
         document.getElementById('import').innerText = 'Import Settings';
-        document.getElementById('import').className = 'btn btn-secondary';
     }, 1000);
 
 });
