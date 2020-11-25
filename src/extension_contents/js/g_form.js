@@ -1,5 +1,5 @@
 
-function g_xmlGetter(path) {
+function g_xmlGetter(path, g_ck=window.g_ck) {
     return new Promise((resolve, reject) => {
         fetch(path, {
             method: 'GET',
@@ -7,6 +7,7 @@ function g_xmlGetter(path) {
                 'Cache-Control': 'no-cache',
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
+                'X-UserToken': g_ck
             }
         }).then(r => resolve(r))
     })
@@ -773,7 +774,8 @@ if (window.g_form) {
         data: {
             page: window.location.origin,
             tableName: window.g_form.tableName,
-            sys_id: window.g_form.getUniqueValue()
+            sys_id: window.g_form.getUniqueValue(),
+            g_ck: window.g_ck
         }
     })
 

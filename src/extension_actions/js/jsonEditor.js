@@ -1,5 +1,11 @@
+let default_g_ck;
 
-function g_xmlGetter(path) {
+function g_xmlGetter(path, g_ck) {
+    if (g_ck) {
+        default_g_ck = g_ck;
+    } else  {
+        g_ck = default_g_ck;
+    }
     return new Promise((resolve, reject) => {
         fetch(path, {
             method: 'GET',
@@ -7,6 +13,7 @@ function g_xmlGetter(path) {
                 'Cache-Control': 'no-cache',
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
+                'X-UserToken': g_ck
             }
         }).then(r => resolve(r))
     })
@@ -16,11 +23,11 @@ async function retrieveContent(element) {
     let temp_id = element.srcElement.getAttribute("val_id")
     let website = element.srcElement.getAttribute("val")
     element.srcElement.parentNode.removeChild(element.srcElement)
-    await insertJSON(website, temp_id)
+    await insertJSON(website, null, temp_id)
 }
 
-async function insertJSON(website, id="editor_holder") {
-    let x = await g_xmlGetter(website)
+async function insertJSON(website, g_ck, id="editor_holder") {
+    let x = await g_xmlGetter(website, g_ck)
     if (x) {
         let result = await x.json();
         let schema = {}
@@ -116,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 id: tabs[0].id
             }
         }, async info => {
-            await insertJSON(info.page + "/api/now/v1/table/" + info.tableName + "/" + info.sys_id)
+            await insertJSON(info.page + "/api/now/v1/table/" + info.tableName + "/" + info.sys_id, info.g_ck)
             let search_bar = document.getElementById("search_bar")
             search_bar.addEventListener("input", listenSearch)
         });
