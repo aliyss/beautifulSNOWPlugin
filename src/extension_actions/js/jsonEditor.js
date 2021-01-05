@@ -1,5 +1,11 @@
 let default_g_ck;
 
+let browser = window.browser = (function () {
+    return window.msBrowser ||
+        window.browser ||
+        window.chrome;
+})();
+
 function g_xmlGetter(path, g_ck) {
     if (g_ck) {
         default_g_ck = g_ck;
@@ -115,8 +121,8 @@ function listenSearch() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-        chrome.runtime.sendMessage({
+    browser.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        browser.runtime.sendMessage({
             type: "g_form_data",
             handle: "get",
             data: {

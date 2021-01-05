@@ -1,7 +1,12 @@
+window.browser = (function () {
+    return window.msBrowser ||
+        window.browser ||
+        window.chrome;
+})();
 
 function bSNOW_retrieve_settings(retrievals) {
     return new Promise((resolve, reject) => {
-        chrome.storage.local.get(retrievals, function (result) {
+        browser.storage.local.get(retrievals, function (result) {
             resolve(result)
         });
     })
@@ -20,13 +25,13 @@ function bSNOW_retrieve_settings(retrievals) {
             scriptGParentCSS.id = "u_g_parent_css";
             scriptGParentCSS.type = "text/css";
             scriptGParentCSS.rel = "stylesheet";
-            scriptGParentCSS.href = chrome.runtime.getURL('extension_contents/css/g_parent.css');
+            scriptGParentCSS.href = browser.runtime.getURL('extension_contents/css/g_parent.css');
 
             document.head.appendChild(scriptGParentCSS);
 
             let scriptGParent = document.createElement('script');
             scriptGParent.id = "u_g_parent";
-            scriptGParent.src = chrome.runtime.getURL('extension_contents/js/g_parent.js');
+            scriptGParent.src = browser.runtime.getURL('extension_contents/js/g_parent.js');
 
             document.body.appendChild(scriptGParent);
         }
@@ -37,7 +42,7 @@ function bSNOW_retrieve_settings(retrievals) {
 
             let scriptGAdmin = document.createElement('script');
             scriptGAdmin.id = "u_g_admin";
-            scriptGAdmin.src = chrome.runtime.getURL('extension_contents/js/g_admin.js');
+            scriptGAdmin.src = browser.runtime.getURL('extension_contents/js/g_admin.js');
 
             document.body.appendChild(scriptGAdmin);
 
@@ -45,11 +50,11 @@ function bSNOW_retrieve_settings(retrievals) {
 
             let scriptGForm = document.createElement('script');
             scriptGForm.id = "u_g_form";
-            scriptGForm.src = chrome.runtime.getURL('extension_contents/js/g_form.js');
+            scriptGForm.src = browser.runtime.getURL('extension_contents/js/g_form.js');
 
             let scriptGLink = document.createElement('script');
             scriptGLink.id = "u_g_link";
-            scriptGLink.src = chrome.runtime.getURL('extension_contents/js/g_link.js');
+            scriptGLink.src = browser.runtime.getURL('extension_contents/js/g_link.js');
 
             document.head.appendChild(scriptGLink);
             document.body.appendChild(scriptGForm);
@@ -62,7 +67,7 @@ function bSNOW_retrieve_settings(retrievals) {
 
         let bSNOW_settings = {
             runtime: {
-                id: chrome.runtime.id
+                id: browser.runtime.id
             }
         }
 

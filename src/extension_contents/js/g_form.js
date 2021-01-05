@@ -1,3 +1,8 @@
+window.browser = (function () {
+    return window.msBrowser ||
+        window.browser ||
+        window.chrome;
+})();
 
 function g_xmlGetter(path, g_ck=window.g_ck) {
     return new Promise((resolve, reject) => {
@@ -15,7 +20,7 @@ function g_xmlGetter(path, g_ck=window.g_ck) {
 
 function g_activity_watch_getter(replacementParameter) {
     return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage(bSNOW_global_settings.runtime.id, {
+        browser.runtime.sendMessage(bSNOW_global_settings.runtime.id, {
                 content: {
                     id: replacementParameter ? replacementParameter : window.g_form.getUniqueValue(),
                 },
@@ -290,7 +295,7 @@ async function executeActionValue(runner_action, value, replacementParameter = n
                             temp_runnerAction = runner_action.value.replace(/\(.*\)/g, "")
                         }
                     }
-                    chrome.runtime.sendMessage(bSNOW_global_settings.runtime.id, {
+                    browser.runtime.sendMessage(bSNOW_global_settings.runtime.id, {
                             content: {
                                 id: replacementParameter ? await parseThroughReg(replacementParameter) : window.g_form.getUniqueValue(),
                             },
@@ -659,6 +664,20 @@ class CommandHandler {
         if (!bSNOW_global_settings.actions) {
             return;
         }
+
+        let controlObject = window.g_form.getControl(data.element_id)
+
+        if (controlObject && controlObject.dataset && controlObject.dataset.charlimit) {
+            let orig_maxCharLengthYo = document.getElementById(data.element_id + '_maxCharLengthYo')
+            if (!orig_maxCharLengthYo) {
+                orig_maxCharLengthYo = document.createElement('p')
+                orig_maxCharLengthYo.id = data.element_id + '_maxCharLengthYo'
+                controlObject.labels[0].appendChild(orig_maxCharLengthYo)
+            }
+            orig_maxCharLengthYo.innerText = 'Remaining: ' + (controlObject.dataset.length - (controlObject.textLength - 1))
+
+        }
+
         let input = await handleInput(data.newValue, config, data.element_id)
         if (input.value !== data.newValue || input.force_replace) {
             await window.g_form.setValue(data.element_id, "")
@@ -768,7 +787,7 @@ if (window.g_form) {
         }
     }
 
-    chrome.runtime.sendMessage(bSNOW_global_settings.runtime.id, {
+    browser.runtime.sendMessage(bSNOW_global_settings.runtime.id, {
         type: "g_form_data",
         handle: "set",
         data: {

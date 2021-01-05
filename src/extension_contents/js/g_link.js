@@ -1,3 +1,9 @@
+window.browser = (function () {
+    return window.msBrowser ||
+        window.browser ||
+        window.chrome;
+})();
+
 function handleTextNode(textNode, currentDocument) {
     if (textNode.parentNode.nodeName === "TEXTAREA" ||
         textNode.parentNode.nodeName === 'SCRIPT'

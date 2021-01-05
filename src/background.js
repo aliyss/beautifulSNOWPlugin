@@ -1,3 +1,9 @@
+window.browser = (function () {
+    return window.msBrowser ||
+        window.browser ||
+        window.chrome;
+})();
+
 function g_xmlGetter(path) {
     return new Promise((resolve, reject) => {
         fetch(path, {
@@ -48,6 +54,52 @@ const pluginHandlers = {
                 let path = `${pluginData.activityWatch_data[request.content.id].base_link}events?start=${pluginData.activityWatch_data[request.content.id].start}&end=${pluginData.activityWatch_data[request.content.id].end}`
                 pluginData.activityWatch_data[request.content.id].values = await (await g_xmlGetter(path)).json()
                 break;
+            case "endFromTo":
+                if (pluginData.activityWatch_data[request.content.id]) {
+                    break;
+                }
+                let fromTo = request.content.id.split('|')
+                let fromToDate = fromTo[0]
+                let fromToStart = fromTo[1]
+                let fromToEnd = fromTo[2]
+
+                let reggie = /(\d{2})-(\d{2})-(\d{4}) (\d{2}):(\d{2}):(\d{2})/;
+
+                let dateStringStart = `${fromToDate.replaceAll('.', '-').replaceAll('/', '-')} ${fromToStart}`;
+                let dateArrayStart = reggie.exec(dateStringStart);
+                let dateObjectStart = new Date(
+                    (+dateArrayStart[3]),
+                    (+dateArrayStart[2])-1, // Careful, month starts at 0!
+                    (+dateArrayStart[1]),
+                    (+dateArrayStart[4]),
+                    (+dateArrayStart[5]),
+                    (+dateArrayStart[6])
+                );
+
+                let dateStringEnd = `${fromToDate.replaceAll('.', '-').replaceAll('/', '-')} ${fromToEnd}`;
+                let dateArrayEnd = reggie.exec(dateStringEnd);
+                let dateObjectEnd = new Date(
+                    (+dateArrayEnd[3]),
+                    (+dateArrayEnd[2])-1, // Careful, month starts at 0!
+                    (+dateArrayEnd[1]),
+                    (+dateArrayEnd[4]),
+                    (+dateArrayEnd[5]),
+                    (+dateArrayEnd[6])
+                );
+
+                let parsedFromToStart = dateObjectStart.toJSON().split(".")[0];
+                let parsedFromToEnd = dateObjectEnd.toJSON().split(".")[0];
+
+                pluginData.activityWatch_data[request.content.id] = {
+                    base_link: request.base_link,
+                    start: parsedFromToStart,
+                    end: parsedFromToEnd,
+                    values: []
+                }
+
+                let pathFromTo = `${pluginData.activityWatch_data[request.content.id].base_link}events?start=${pluginData.activityWatch_data[request.content.id].start}&end=${pluginData.activityWatch_data[request.content.id].end}`
+                pluginData.activityWatch_data[request.content.id].values = await (await g_xmlGetter(pathFromTo)).json()
+                break;
             case "get":
                 return pluginData.activityWatch_data[request.content.id];
             case "delete":
@@ -74,7 +126,7 @@ async function requestHandler(request, sender, sendResponse) {
     }
 }
 
-chrome.runtime.onMessage.addListener(requestHandler)
+browser.runtime.onMessage.addListener(requestHandler)
 
-chrome.runtime.onMessageExternal.addListener(requestHandler);
+browser.runtime.onMessageExternal.addListener(requestHandler);
 

@@ -1,6 +1,12 @@
 var editor;
 
-chrome.storage.local.get(['global_replacements', 'quick_adds', 'actions', 'auto_runs', 'quick_add_buttons', 'advanced_settings', 'activity_watcher'], function (result) {
+window.browser = (function () {
+    return window.msBrowser ||
+        window.browser ||
+        window.chrome;
+})();
+
+browser.storage.local.get(['global_replacements', 'quick_adds', 'actions', 'auto_runs', 'quick_add_buttons', 'advanced_settings', 'activity_watcher'], function (result) {
     let contentConfig = result;
 
     if (!contentConfig.global_replacements) {
@@ -744,7 +750,7 @@ chrome.storage.local.get(['global_replacements', 'quick_adds', 'actions', 'auto_
 
         try {
             let parser = editor.getValue();
-            chrome.storage.local.set(parser)
+            browser.storage.local.set(parser)
             document.getElementById('submit').innerText = 'Saving...';
         } catch (e) {
             document.getElementById('submit').innerText = 'Error: Saving.';
@@ -781,7 +787,7 @@ document.getElementById('import').addEventListener('click', async function () {
     const contents = await file.text();
 
     try {
-        chrome.storage.local.set(JSON.parse(contents), function () {
+        browser.storage.local.set(JSON.parse(contents), function () {
             console.log("Files have been saved to SYNC")
         });
         location.reload();
