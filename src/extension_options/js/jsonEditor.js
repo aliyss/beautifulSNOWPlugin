@@ -423,6 +423,21 @@ browser.storage.local.get(['global_replacements', 'quick_adds', 'actions', 'auto
                                     input_width: '100px'
                                 }
                             },
+							tenants: {
+                                type: "array",
+                                format: "table",
+                                title: "Tenant Names",
+                                uniqueItems: true,
+                                items: {
+                                    title: "Tenant ID",
+                                    type: "string",
+                                    name: "",
+                                },
+                                options: {
+                                    input_height: '40px',
+                                    input_width: '500px'
+                                }
+                            },
                             tableNames: {
                                 type: "array",
                                 format: "table",

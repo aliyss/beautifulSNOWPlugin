@@ -766,7 +766,7 @@ if (window.g_form) {
     if (bSNOW_global_settings && bSNOW_global_settings.quick_add_buttons) {
         let btns = bSNOW_global_settings.quick_add_buttons;
         for (let i = 0; i < btns.length; i++) {
-            if (btns[i].tableNames.includes(window.g_form.tableName)) {
+            if (btns[i].tableNames.includes(window.g_form.tableName) && (btns[i].tenants.length <= 0 || btns[i].tenants.includes(window.location.host.split(".")[0]))) {
                 let g_form_header_bar = document.querySelector(`#${window.g_form.tableName}\\.form_header nav > div > div.navbar-right`);
                 let g_form_header_bar_button = document.createElement("button")
                 g_form_header_bar_button.textContent = btns[i].code;
