@@ -1,14 +1,13 @@
 {
 	"name": "beautifulSNOWPlugin",
-	"description" : "beautifulSnowClient as a Plugin instead of a full desktop Application.",
+	"description": "beautifulSnowClient as a Plugin instead of a full desktop Application.",
 	"manifest_version": 2,
-	"version": "0.0.0.2",
+	"version": "0.0.0.3",
 	"author": "Aliyss Snow",
 	"permissions": [
 		"storage",
 		"tabs",
-		"http://localhost:5600/",
-		"https://localhost:5600/"
+		"<all_urls>"
 	],
 	"content_scripts": [
 		{
